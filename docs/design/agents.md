@@ -60,12 +60,10 @@ flowchart LR
   git.md                       this repo's commit, push and PR conventions
 ```
 
-`SKILL.md` and `LIVE.md` are separate files so the Agent can keep notes without rewriting its own role.
+`SKILL.md` and `LIVE.md` are separate files so the Agent can keep notes without rewriting its own role. Claude Code
+live-reloads only `SKILL.md`, so the skill reads `LIVE.md` with a file read at start rather than embedding it.
 
-`<repo>` is always the main checkout. An Agent asked to work in a worktree edits code there but reads and writes its
-skill, ledger and handoff in the main checkout's `.claude/`. The binary resolves it as
-`dirname "$(git rev-parse --path-format=absolute --git-common-dir)"`, which returns the main checkout from inside any
-linked worktree.
+`<repo>` is always the main checkout, even when the Agent works in a worktree.
 
 ## Ledger item
 
@@ -75,14 +73,13 @@ The binary owns the frontmatter; the model owns the body.
 ---
 id: 007
 title: one line
-kind: task | followup | debt
+kind: task | followup
 status: open | in-progress | closed
 created: 2026-09-30
-origin: user | 003 | <repo>:<agent>/004 | ponytail:<file>#<hash8>
 closed: 2026-10-01
 reason: one line
 ---
-## Goal       what done means, checkable
+## Goal       From: <who asked: user, 003, repo:agent/004>; what done means, checkable
 ## Approach   direct | subagent | ultracode, and why
 ## Log        one line per step; the crash cursor
 ## Outcome    written at close
@@ -90,40 +87,38 @@ reason: one line
 
 An item too big for one pass closes with `reason: split: 008-010`, and the children are added.
 
-```mermaid
-stateDiagram-v2
-  [*] --> open
-  open --> in_progress: start
-  in_progress --> closed: close
-  open --> closed: close (reason required)
-  in_progress --> open: reopen
-  closed --> open: reopen
-```
-
-At most one item per Agent is in progress.
+`open -> in-progress -> closed`; `close` also works from open; `reopen` returns either to open. At most one item per
+Agent is in progress.
 
 ## Session flow
 
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant H as SessionStart hook
-  participant A as Agent skill
-  participant B as apex
-  H->>U: roster: each agent, handoff state, in-progress item
-  U->>A: invoke /<agent>
-  A->>A: read LIVE.md, pre-loads
-  A->>B: apex graph update, apex list --agent X
-  loop one item at a time
-    A->>B: start
-    A->>A: execute (direct | subagent | ultracode), log steps
-    A->>A: review + /ponytail-review, update LIVE.md
-    A->>B: close, then handoff
-  end
+1. The user invokes `/<agent>`. The Agent reads `LIVE.md`, its pre-loads and `handoff.md`, then runs the handoff's
+   Startup steps.
+2. Per item: `apex start`, execute (direct, subagent or Ultracode) logging each step, review plus `/ponytail-review`,
+   update `LIVE.md`, `apex close`, rewrite `handoff.md`.
+
+Every stateful `apex` verb takes an explicit `--agent`. There is no default Agent.
+
+## Handoff
+
+The handoff is a markdown file the Agent writes and reads with ordinary commands; the binary has no handoff verb. Its
+format and startup steps live in the Agent skill.
+
+```
+---
+checkout: <absolute path of the checkout worked in>
+branch: <git rev-parse --abbrev-ref HEAD>
+head: <git rev-parse HEAD>
+---
+## Startup     invoke the Agent skill (reads LIVE.md); apex graph update .; apex list --agent <agent>
+## State       current item and where it stopped, uncommitted work
+## Next
+## Open threads
 ```
 
-The hook cannot know which Agent a session is, so it prints the roster only. Every stateful `apex` verb takes an
-explicit `--agent`. There is no default Agent.
+The handoff is stale when the recorded checkout no longer exists, or its branch or HEAD differs. `head` is always the
+full SHA and is compared in full, never abbreviated. A stale handoff is still read; staleness tells the Agent to
+reconcile State against what changed.
 
 ## Collaboration
 
@@ -145,20 +140,14 @@ for the main checkout and the worktree's directory name otherwise, so Agents on 
 each other's graph. A wrapper rather than an instructed env prefix, because one forgotten prefix writes
 `graphify-out/` into the repo root.
 
-A worktree's graph lives exactly as long as the worktree does on disk. Every `apex graph` call and the SessionStart
-hook compare `graphify/*/` against `git worktree list` and delete each graph whose worktree directory no longer exists.
+A worktree's graph lives exactly as long as the worktree does on disk. Every `apex graph` call compares `graphify/*/`
+against `git worktree list` and deletes each graph whose worktree directory no longer exists.
 `main` is never pruned.
 
-**Who and when.**
-
-| Event | Who | Command |
-|---|---|---|
-| Session start, as a handoff startup step | the session's Agent | `apex graph update .` |
-| Closing an item that changed code | the owning Agent | `apex graph update .` |
-| Orienting at the start of an item | the Agent or its subagents | `query`, `explain`, `path`, `affected` |
-
-`update` re-extracts code only, with no LLM, in under a second on a mid-sized repo, so it always runs rather than
-checking for staleness. Subagents and Ultracode workers only read. Concurrent writers are safe because graphify
+**When.** The session's Agent runs `apex graph update .` at startup and again before the first query after code
+changed. `update` re-extracts code only, with no LLM, in under a second on a mid-sized repo, so it always runs rather
+than checking for staleness. The Agent and its subagents orient with `query`, `explain`, `path` and `affected`;
+subagents and Ultracode workers only read. Concurrent writers are safe because graphify
 replaces files atomically and the rebuild is deterministic; the last writer wins.
 
 **Reading.** Every read passes `--budget`. A truncated answer means narrowing the question, not raising the budget
@@ -174,7 +163,7 @@ subject, body only for a non-obvious why, no AI attribution. It changes two thin
 
 1. **Per-repo conventions.** Each repo states its own commit, push and PR conventions in `.claude/git.md`: message
    format, branch naming, ticket prefixes, remotes, PR template. The skill reads that file first and falls back to its
-   defaults for anything unstated. `apex init` writes it; `apex migrate` derives it from the repo's history.
+   defaults for anything unstated. The `apex-init` skill writes it.
 2. **Permission defaults.**
 
 | Action | Default |
@@ -187,17 +176,16 @@ The Agent never reminds the operator to open a PR, and says nothing about pushin
 
 ## Session start and Sign off
 
-`apex init` adds a short section to the repo's `CLAUDE.md` that frames every session.
+The `apex-init` skill adds a short section to the repo's `CLAUDE.md` that frames every session.
 
-- **Start:** find your Agent skill and ledger from the roster the hook printed, then invoke the Agent skill.
+- **Start:** invoke your Agent skill.
 - **Sign off:** a notice the operator gives to end a session, handled by the `sign-off` skill. The skill runs from
   `/sign-off` or when the operator says "sign off". The Agent then:
   1. logs where the in-progress item stopped, or closes it;
   2. updates `LIVE.md`;
-  3. updates the graph;
-  4. writes the handoff;
-  5. cleans up what the session started: scratch files, servers, merged worktrees;
-  6. reports unpushed commits. This is the only point where pushing comes up.
+  3. writes the handoff;
+  4. cleans up what the session started: scratch files, servers, merged worktrees;
+  5. reports unpushed commits. This is the only point where pushing comes up.
 
 ## Auto-memory
 
@@ -206,36 +194,22 @@ works in the repo; the protocol accepts this.
 
 ## Init and migrate
 
-A repo adopts the protocol in a single-use session through a skill plus command pair. `apex init` inspects the repo and
+A repo adopts the protocol in a single-use session that runs the `apex-init` skill. The skill inspects the repo and
 routes to exactly one outcome:
 
 | State found | Outcome |
 |---|---|
 | No agents, no ledgers | initialize from a blank slate |
-| Agent skills, ledgers or handoffs in a foreign layout | `apex migrate` |
+| Agent skills, ledgers or handoffs in a foreign layout | migrate |
 | Already follows the rules | report conformant, change nothing |
 
-The binary detects the state and performs the mechanical moves. The model classifies what the binary cannot, such as a
-ledger status written in prose.
+The binary has no init or migrate verb. The skill moves files and rewrites them, and files ledger items through
+`apex add`.
 
 LLMTraining is the first migration target. Its foreign layout: `DevLedger/` and `ResearchLedger/` at the repo root with
 a hand-kept `INDEX.md`, handoffs in `docs/handoff/`, role cards in `.claude/skills/`, and project facts in memory.
 
-## Platform facts
-
-Verified against code.claude.com/docs on 2026-09-30.
-
-| Fact | Consequence |
-|---|---|
-| `plugin.json` `dependencies` exists; a plugin whose dependency is missing fails to load | Ponytail is a hard dependency |
-| SessionStart `hookSpecificOutput.reloadSkills` re-scans skill directories | The hook can surface a newly created Agent skill |
-| `additionalContext` is capped at 10,000 characters | The roster stays a few lines |
-| `autoMemoryEnabled` is honored in every settings scope | Auto-memory off is one key |
-| SKILL.md has no dependency field | Pre-loads are body instructions |
-| Live change detection covers `SKILL.md` only | The Agent skill reads `LIVE.md` with a file read at start, never embeds it |
-| `CLAUDE_ENV_FILE` reaching subagents is undocumented | Nothing relies on it; `--agent` is always explicit |
-
 ## Open questions
 
-1. `apex init` detection: which signals prove a repo conformant. Evolving by design: implement first, dry-run on
+1. `apex-init` detection: which signals prove a repo conformant. Evolving by design: implement first, dry-run on
    LLMTraining, then calibrate.
