@@ -1,6 +1,6 @@
 ---
 name: apex-init
-description: Adopt the Apex Agent protocol in a repo. Inspects the repo and does exactly one of three things. It initializes Agents from a blank slate, migrates a foreign layout of role cards, ledgers, handoffs and memory onto the protocol, or reports the repo conformant and changes nothing. Use once per repo, on /apex:apex-init or when the operator asks to set up or migrate Apex Agents.
+description: Adopt the Apex Agent protocol in a repo. Inspects the repo and does exactly one of three things. It initializes Agents from a blank slate, migrates a foreign layout of role cards, ledgers, handoffs and memory onto the protocol, or reports the repo conformant and changes nothing. Use once per repo, on /apex-init or when the operator asks to set up or migrate Apex Agents.
 ---
 
 # apex-init
@@ -29,7 +29,7 @@ Collect these facts before routing. Read only; change nothing yet.
 
 | Fact | How |
 |---|---|
-| Apex Agents | each `<repo>/.claude/skills/<a>/` holding both `SKILL.md` and `LIVE.md`, whose `SKILL.md` loads `apex:agent-protocol` |
+| Apex Agents | each `<repo>/.claude/skills/<a>/` holding both `SKILL.md` and `LIVE.md`, whose `SKILL.md` loads `agent-protocol` |
 | Foreign ledgers | directories of numbered item files kept outside `.claude/ledger/`, such as `DevLedger/` with `INDEX.md` and `NNN-slug.md` |
 | Foreign handoffs | handoffs of an Agent defined in this repo kept outside `.claude/ledger/<a>/handoff.md`, such as `docs/handoff/*.md`. Notes files do not count |
 | Foreign role cards | `.claude/skills/<x>/SKILL.md` that describe an agent role but are not Apex Agents, such as `.claude/skills/dev-agent/` |
@@ -172,7 +172,7 @@ migration. Then, in this order, because `apex` needs the Agent's `SKILL.md` to e
 
    Fix a wrong title with `apex retitle <id> "<title>" --agent <agent>` and a wrong reason with `apex reopen` then
    `apex close`; never file the item again.
-4. **Handoffs.** Write `.claude/ledger/<agent>/handoff.md` in the format from `apex:agent-protocol`. Its frontmatter
+4. **Handoffs.** Write `.claude/ledger/<agent>/handoff.md` in the format from `agent-protocol`. Its frontmatter
    is filled after the commit, in 7. Carry State, Next and Open threads from the carried handoff, plus the waiting
    parts from the status table; rewrite references by the id map. Procedure text
    that belongs to the role card is dropped.
@@ -233,7 +233,7 @@ Blank slate and migrate both finish with these; the shared-setup route runs them
 
 ## 7. Commit
 
-The last step, after the operator approves. Load `apex:git-discipline` and commit what this session created and
+The last step, after the operator approves. Load `git-discipline` and commit what this session created and
 deleted in the repo, staged by explicit path. A file on the 4.3 list of files already modified holds the operator's own
 edits: leave it out, or name it to the operator and stage it only on their yes.
 

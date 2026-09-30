@@ -12,6 +12,8 @@ Design workspace for the fresh slate. The previous Apex lives in `example/` as a
   mentions which. The one exception is `.claude/graphify/`, which `apex graph` gitignores on first run.
 - Binary-light: Go only where the answer must be deterministic.
 - Ponytail and graphify are required dependencies.
+- The protocol skills install as user skills, not a plugin, so they keep bare names (`/apex-init`); `make install`
+  refuses to run without ponytail and graphify.
 - Git is governed by a git-discipline skill with per-repo conventions; push and PR happen only on the operator's word.
 
 ## What an Agent is
@@ -21,7 +23,7 @@ Agents can be active in one repo at once, and they either work independently or 
 
 An Agent defines two things:
 
-1. What to pre-load: other skills, either repo skills or plugin skills. The Agent is a standard-format skill whose body
+1. What to pre-load: other skills (repo, user or plugin). The Agent is a standard-format skill whose body
    tells the model which skills to load at start; there is no custom frontmatter.
 2. What it owns: one ledger and one handoff.
 
@@ -102,8 +104,8 @@ day of the correction.
 
 1. The user invokes `/<agent>`. The Agent reads `LIVE.md`, its pre-loads and `handoff.md`, then runs the handoff's
    Startup steps.
-2. Per item: `apex start`, execute (direct, subagent or Ultracode) logging each step, review plus `/ponytail-review`,
-   update `LIVE.md`, `apex close`, rewrite `handoff.md`.
+2. Per item: `apex start`, execute (direct, subagent or Ultracode) logging each step, review plus
+   `/ponytail:ponytail-review`, update `LIVE.md`, `apex close`, rewrite `handoff.md`.
 
 Every stateful `apex` verb takes an explicit `--agent`. There is no default Agent.
 

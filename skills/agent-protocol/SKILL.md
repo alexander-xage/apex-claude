@@ -47,7 +47,7 @@ never run stateful verbs.
 | 4 | corrupt ledger | stop and report the file; never hand-edit frontmatter to fix it |
 | 64 | usage | fix the call |
 
-The table does not apply to `apex graph`; its exits and errors are in `apex:graphify-discipline`.
+The table does not apply to `apex graph`; its exits and errors are in `graphify-discipline`.
 
 The binary owns item frontmatter. You edit only the body sections. Fix a wrong title with `apex retitle`, and a
 wrong close reason with `apex reopen` then `apex close`.
@@ -104,12 +104,12 @@ starting another.
    trap. Skip it when nothing durable came up.
 7. Write `## Outcome`.
 8. `apex close <id> "done: <one line>" --agent <agent>`.
-9. Commit the item's work per `apex:git-discipline`: the code plus the item's `.claude/` changes. In a worktree, the
+9. Commit the item's work per `git-discipline`: the code plus the item's `.claude/` changes. In a worktree, the
    code commits in the worktree and the `.claude/` changes commit in `<repo>`. An item with no code commits its
    `.claude/` changes alone, like any other.
 10. Rewrite `handoff.md` after the commit, so `head` covers the item's code. It rides in the next item's commit.
 
-`.claude/` files may be committed at any time, per `apex:git-discipline`.
+`.claude/` files may be committed at any time, per `git-discipline`.
 
 Every close reason starts with one of these prefixes:
 

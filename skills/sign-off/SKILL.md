@@ -1,12 +1,12 @@
 ---
 name: sign-off
-description: End an Agent session cleanly. Logs or closes the in-progress ledger item, updates LIVE.md, writes the handoff, cleans up what the session started, commits the session's .claude/ changes, and reports unpushed commits. Use on /apex:sign-off or when the operator says "sign off".
+description: End an Agent session cleanly. Logs or closes the in-progress ledger item, updates LIVE.md, writes the handoff, cleans up what the session started, commits the session's .claude/ changes, and reports unpushed commits. Use on /sign-off or when the operator says "sign off".
 ---
 
 # Sign off
 
 The operator's notice that the session ends. Run the six steps in order, as the Agent this session was started as.
-Every `apex` call passes `--agent <agent>`. Ledger, handoff, `LIVE.md` and `<repo>` come from `apex:agent-protocol`.
+Every `apex` call passes `--agent <agent>`. Ledger, handoff, `LIVE.md` and `<repo>` come from `agent-protocol`.
 
 ## 1. In-progress item
 
@@ -14,7 +14,7 @@ Find it with `apex list --status in-progress --agent <agent>`. None: skip to ste
 
 | Item state | Action |
 |---|---|
-| Goal met and reviewed | `apex:agent-protocol` Work an item steps 7-9 |
+| Goal met and reviewed | `agent-protocol` Work an item steps 7-9 |
 | Not done | append one `## Log` line saying where it stopped and what comes next; leave it in progress |
 
 ## 2. LIVE.md
@@ -25,7 +25,7 @@ file.
 
 ## 3. Handoff
 
-Overwrite `<repo>/.claude/ledger/<agent>/handoff.md` in the format `apex:agent-protocol` defines. Take `checkout`,
+Overwrite `<repo>/.claude/ledger/<agent>/handoff.md` in the format `agent-protocol` defines. Take `checkout`,
 `branch` and `head` from the checkout worked in at this moment. State names the item from step 1 and any uncommitted
 work outside `.claude/`.
 
@@ -44,7 +44,7 @@ removed.
 
 ## 5. Commit `.claude/`
 
-Commit the session's `.claude/` changes in `<repo>` per `apex:git-discipline`: on the operator's approval, or
+Commit the session's `.claude/` changes in `<repo>` per `git-discipline`: on the operator's approval, or
 automatically when `.claude/git.md` says so. The commit lands on whatever branch `<repo>` has checked out and stages
 only the `.claude/` paths this session changed, never the operator's other staged or unstaged work.
 
@@ -58,4 +58,4 @@ git rev-parse --abbrev-ref @{u}          # upstream name; fails when there is no
 ```
 
 Report branch, upstream (or "no upstream") and the commits. Push only if the operator says so, following
-`apex:git-discipline`.
+`git-discipline`.

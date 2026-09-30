@@ -1,6 +1,6 @@
 # Git conventions
 
-Read by `apex:git-discipline`. A row left out falls back to the skill's defaults.
+Read by `git-discipline`. A row left out falls back to the skill's defaults.
 
 | Convention | This repo |
 |---|---|

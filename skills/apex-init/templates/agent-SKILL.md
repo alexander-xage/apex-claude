@@ -5,8 +5,8 @@ description: "{{Agent}} Agent. {{one-line role}} Invoke at session start to work
 
 # {{Agent}} Agent
 
-Before anything else, load `apex:agent-protocol` and run its Startup. The other pre-loads are
-`apex:graphify-discipline`, `apex:git-discipline` and `ponytail:ponytail`.
+Before anything else, load `agent-protocol` and run its Startup. The other pre-loads are
+`graphify-discipline`, `git-discipline` and `ponytail:ponytail`.
 
 | Owns | Path |
 |---|---|

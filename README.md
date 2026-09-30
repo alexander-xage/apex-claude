@@ -1,6 +1,6 @@
 # apex
 
-A Claude Code plugin for user-defined Agents. Each Agent is a skill you write; it owns one ledger and one handoff,
+A Claude Code skill set for user-defined Agents. Each Agent is a skill you write; it owns one ledger and one handoff,
 works the ledger one item at a time, and keeps its notes in `LIVE.md` instead of memory. The `apex` CLI owns the
 deterministic parts: ledger state and the per-checkout code graph.
 
@@ -8,30 +8,22 @@ The contract is [docs/design/agents.md](docs/design/agents.md).
 
 ## Install
 
-Requires Go 1.26+, `graphify` 0.9.72+ on `PATH`, and the ponytail marketplace.
+Requires Go 1.26+, `graphify` 0.9.72+ on `PATH` (`uv tool install graphifyy`), and the ponytail plugin
+(`/plugin marketplace add DietrichGebert/ponytail`, then `/plugin install ponytail@ponytail`).
 
 ```sh
 git clone git@github.com:FNGApex/apex-claude.git && cd apex-claude
-make install        # builds apex into ~/.local/bin (override with PREFIX=...)
+make install      # apex -> ~/.local/bin, skills -> ${CLAUDE_CONFIG_DIR:-~/.claude}/skills
+make uninstall    # removes both
 ```
 
-`PREFIX` must be on the `PATH` of the shell Claude Code runs Bash in; every skill calls a bare `apex`.
+`make install` stops if graphify or ponytail is missing, or if a skill folder of the same name exists that it did not
+install; it never overwrites or removes a skill of yours. `PREFIX` must be on the `PATH` of the shell Claude Code
+runs Bash in; every skill calls a bare `apex`. The skills install as user skills, not as a plugin, so they keep bare
+names (`/apex-init`, `/sign-off`); plugin skills are always prefixed with the plugin name. Restart Claude Code after
+installing.
 
-From a Claude Code session inside the clone:
-
-```text
-/plugin marketplace add DietrichGebert/ponytail
-/plugin marketplace add ./
-/plugin install apex@apex
-```
-
-The plugin and the binary then come from one checkout, so the skills match the binary's verbs. Installing `apex` pulls
-in `ponytail@ponytail`.
-
-For local development, `make build` writes `bin/apex`, which Claude Code puts on the Bash `PATH` when the plugin loads
-with `claude --plugin-dir .`.
-
-Then adopt the protocol in a repo with one session that runs `/apex:apex-init`.
+Then adopt the protocol in a repo with one session that runs `/apex-init`.
 
 ## The Agent model
 
@@ -51,7 +43,7 @@ The graph covers code only: `apex graph` keeps `.claude/` out of it without writ
 ## apex verbs
 
 Every verb but `graph` takes `--agent <name>`, which must name an existing `.claude/skills/<name>/SKILL.md`; until
-then the verb exits 1. `/apex:apex-init` creates the role card.
+then the verb exits 1. `/apex-init` creates the role card.
 
 | Verb | Does |
 |---|---|
@@ -70,8 +62,8 @@ with graphify's own code, or 128+N when graphify dies by signal N.
 
 | Skill | Use |
 |---|---|
-| `/apex:agent-protocol` | session start, the item loop, ledger and handoff rules; every Agent pre-loads it |
-| `/apex:graphify-discipline` | how Agents query and update the code graph through `apex graph` |
-| `/apex:git-discipline` | commit rules and per-repo conventions from `.claude/git.md` |
-| `/apex:sign-off` | ends a session: log, `LIVE.md`, handoff, cleanup, unpushed commits |
-| `/apex:apex-init` | adopts the protocol in a repo: initialize, migrate, or report conformant |
+| `/agent-protocol` | session start, the item loop, ledger and handoff rules; every Agent pre-loads it |
+| `/graphify-discipline` | how Agents query and update the code graph through `apex graph` |
+| `/git-discipline` | commit rules and per-repo conventions from `.claude/git.md` |
+| `/sign-off` | ends a session: log, `LIVE.md`, handoff, cleanup, unpushed commits |
+| `/apex-init` | adopts the protocol in a repo: initialize, migrate, or report conformant |
