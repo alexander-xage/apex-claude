@@ -122,3 +122,52 @@ func TestGraphSignalExit(t *testing.T) {
 		t.Fatalf("exit %d, want 143", code)
 	}
 }
+
+// graphify must see the exclusion before it scans, and apex must not leave an untracked file in the checkout (that
+// would block `git worktree remove`).
+func TestGraphExcludesClaudeViaBuildConfig(t *testing.T) {
+	fakeGraphifyScript(t, "#!/bin/sh\ncat \"$GRAPHIFY_OUT/.graphify_build.json\"\n")
+	r := gitRepo(t)
+	out := filepath.Join(r, ".claude", "graphify", "main")
+	if err := os.MkdirAll(out, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(out, ".graphify_build.json"), []byte(`{"excludes": ["vendor"], "gitignore": false}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	code, stdout, errs := apex(t, r, "graph", "update", ".")
+	if code != 0 {
+		t.Fatalf("exit %d: %s", code, errs)
+	}
+	for _, want := range []string{`"vendor"`, `".claude"`, `"gitignore":false`} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("build config seen by graphify = %s; missing %s", stdout, want)
+		}
+	}
+	if out, _ := exec.Command("git", "-C", r, "status", "--porcelain", "--untracked-files=all", "--", ":!.claude/graphify").Output(); len(out) != 0 {
+		t.Errorf("apex graph left files in the checkout:\n%s", out)
+	}
+	code, _, _ = apex(t, r, "graph", "update", ".")
+	data, _ := os.ReadFile(filepath.Join(out, ".graphify_build.json"))
+	if code != 0 || strings.Count(string(data), ".claude") != 1 {
+		t.Errorf("second run: exit %d, config %s; want .claude listed once", code, data)
+	}
+}
+
+// graphify ignores a config it cannot parse, which would silently drop the exclusion.
+func TestGraphRejectsCorruptBuildConfig(t *testing.T) {
+	fakeGraphify(t)
+	r := gitRepo(t)
+	out := filepath.Join(r, ".claude", "graphify", "main")
+	if err := os.MkdirAll(out, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, bad := range []string{"{not json", "null", "[]", `"x"`} {
+		if err := os.WriteFile(filepath.Join(out, ".graphify_build.json"), []byte(bad), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if code, _, errs := apex(t, r, "graph", "update", "."); code != 2 || !strings.Contains(errs, "JSON object") {
+			t.Errorf("config %s: exit %d (%s), want 2 naming a JSON object", bad, code, errs)
+		}
+	}
+}

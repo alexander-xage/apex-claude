@@ -54,6 +54,7 @@ flowchart LR
 <repo>/.claude/
   skills/<agent>/SKILL.md      role card, user-owned; body lists the skills to pre-load
   skills/<agent>/LIVE.md       live notes, agent-owned; replaces memory
+  LIVE.md                      shared notes: facts true for every Agent in this repo
   ledger/<agent>/NNN.md        one item per file, never deleted
   ledger/<agent>/handoff.md    one file, overwritten
   graphify/<checkout>/         one graph per checkout
@@ -62,6 +63,9 @@ flowchart LR
 
 `SKILL.md` and `LIVE.md` are separate files so the Agent can keep notes without rewriting its own role. Claude Code
 live-reloads only `SKILL.md`, so the skill reads `LIVE.md` with a file read at start rather than embedding it.
+
+`.claude/LIVE.md` holds facts every Agent in the repo needs, kept once instead of copied into each Agent's notes. Every
+Agent reads it at start, after its own `LIVE.md`, and any Agent may edit it.
 
 `<repo>` is always the main checkout, even when the Agent works in a worktree.
 
@@ -116,8 +120,10 @@ head: <git rev-parse HEAD>
 ## Open threads
 ```
 
-The handoff is stale when the recorded checkout no longer exists, or its branch or HEAD differs. `head` is always the
-full SHA and is compared in full, never abbreviated. A stale handoff is still read; staleness tells the Agent to
+The handoff is stale when the recorded checkout no longer exists, its branch differs, or the code outside `.claude/`
+differs from `head` in either direction: `git diff --quiet <head> HEAD -- . ':(exclude).claude'` exits non-zero, which
+also covers a branch moved backward and a `head` git no longer knows. Committing the handoff, ledger or `LIVE.md`
+never makes it stale. `head` is always the full SHA. A stale handoff is still read; staleness tells the Agent to
 reconcile State against what changed.
 
 ## Collaboration
@@ -137,8 +143,8 @@ graphify 0.9.72: with it set, `update` wrote `graph.json`, `GRAPH_REPORT.md`, `m
 Agents never call `graphify` directly. `apex graph <args>` resolves the main checkout and the current checkout, sets
 `GRAPHIFY_OUT` to `<main>/.claude/graphify/<checkout>/`, and runs `graphify <args>` unchanged. `<checkout>` is `main`
 for the main checkout and the worktree's directory name otherwise, so Agents on different branches never overwrite
-each other's graph. A worktree directory named `main`, or two live worktrees sharing a name, is an error. A wrapper rather than an instructed env prefix, because one forgotten prefix writes
-`graphify-out/` into the repo root.
+each other's graph. A worktree directory named `main`, or two live worktrees sharing a name, is an error. A wrapper
+rather than an instructed env prefix, because one forgotten prefix writes `graphify-out/` into the repo root.
 
 A worktree's graph lives exactly as long as the worktree does on disk. Every `apex graph` call compares `graphify/*/`
 against `git worktree list` and deletes each graph whose worktree directory no longer exists.
@@ -149,6 +155,11 @@ changed. `update` re-extracts code only, with no LLM, in under a second on a mid
 than checking for staleness. The Agent and its subagents orient with `query`, `explain`, `path` and `affected`;
 subagents and Ultracode workers only read. Concurrent writers are safe because graphify
 replaces files atomically and the rebuild is deterministic; the last writer wins.
+
+**Scope.** The graph describes code, not protocol state. `apex graph` adds `.claude` to the excludes graphify persists
+in the graph directory (`.graphify_build.json`, an internal graphify 0.9.x file), so ledger items, handoffs and notes
+never enter the graph and no file lands in the checkout. `apex graph extract --exclude X` replaces that list for its
+run, so an extract item passes `--exclude .claude` alongside its own excludes.
 
 **Reading.** Every read passes `--budget`. A truncated answer means narrowing the question, not raising the budget
 blindly.
@@ -205,6 +216,10 @@ routes to exactly one outcome:
 
 The binary has no init or migrate verb. The skill moves files and rewrites them, and files ledger items through
 `apex add`.
+
+Migration renumbers each Agent's items from 001 in old order and rewrites every reference to an old number inside the
+repo: item bodies, handoffs, both `LIVE.md` levels, code and docs. References in other repos cannot be rewritten from
+here; the skill lists them for the operator. Facts several Agents share go to `.claude/LIVE.md`, once.
 
 LLMTraining is the first migration target. Its foreign layout: `DevLedger/` and `ResearchLedger/` at the repo root with
 a hand-kept `INDEX.md`, handoffs in `docs/handoff/`, role cards in `.claude/skills/`, and project facts in memory.

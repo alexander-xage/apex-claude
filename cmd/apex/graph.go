@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -43,7 +44,7 @@ func graph(dir string, args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-// graphOut prunes stale graphs, then creates and returns this checkout's graph directory.
+// graphOut returns this checkout's graph directory, pruning stale graphs and excluding .claude/ on the way.
 func graphOut(dir string) (string, error) {
 	main, err := repo.Main(dir)
 	if err != nil {
@@ -58,7 +59,10 @@ func graphOut(dir string) (string, error) {
 		return "", err
 	}
 	out := filepath.Join(graphs, checkout)
-	return out, os.MkdirAll(out, 0o755)
+	if err := os.MkdirAll(out, 0o755); err != nil {
+		return "", err
+	}
+	return out, excludeProtocolState(out)
 }
 
 // pruneGraphs deletes the graph of every worktree that no longer exists. It lists the graphs before the worktrees: a
@@ -83,4 +87,47 @@ func pruneGraphs(dir, graphs string) error {
 		}
 	}
 	return nil
+}
+
+// excludeProtocolState adds .claude to graphify's persisted excludes (docs/design/agents.md, Graphify discipline).
+// ponytail: .graphify_build.json is graphify 0.9.x's internal format; if a release drops it, fall back to .graphifyignore.
+func excludeProtocolState(out string) error {
+	path := filepath.Join(out, ".graphify_build.json")
+	cfg := map[string]any{}
+	data, err := os.ReadFile(path)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if err == nil {
+		if err := json.Unmarshal(data, &cfg); err != nil || cfg == nil {
+			return fmt.Errorf("%s is not a JSON object, so graphify would ignore it", path)
+		}
+	}
+	excludes, _ := cfg["excludes"].([]any)
+	for _, e := range excludes {
+		if e == ".claude" {
+			return nil
+		}
+	}
+	cfg["excludes"] = append(excludes, ".claude")
+	data, err = json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	tmp, err := os.CreateTemp(out, ".tmp-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name())
+	_, err = tmp.Write(data)
+	if err == nil {
+		err = tmp.Chmod(0o644)
+	}
+	if cerr := tmp.Close(); err == nil {
+		err = cerr
+	}
+	if err != nil {
+		return err
+	}
+	return os.Rename(tmp.Name(), path)
 }
