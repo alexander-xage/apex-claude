@@ -1,0 +1,9 @@
+{
+  "name": "apex",
+  "version": "0.1.0",
+  "description": "User-defined Agents that each own one ledger and one handoff, work one item at a time, and share the apex CLI for deterministic ledger and graph state.",
+  "author": { "name": "Alexander Stroev" },
+  "repository": "https://github.com/FNGApex/apex-claude",
+  "license": "MIT",
+  "dependencies": ["ponytail@ponytail"]
+}
