@@ -30,7 +30,7 @@ const (
 )
 
 var (
-	kinds    = []string{"task", "followup", "debt"}
+	kinds    = []string{"task", "followup"}
 	statuses = []string{StatusOpen, StatusInProgress, StatusClosed}
 
 	agentRe = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
@@ -44,7 +44,6 @@ type Item struct {
 	Kind    string
 	Status  string
 	Created string
-	Origin  string
 	Closed  string
 	Reason  string
 	Body    string
@@ -55,8 +54,8 @@ const bodyTemplate = "## Goal\n\n## Approach\n\n## Log\n\n## Outcome\n"
 func (it *Item) render() []byte {
 	var b strings.Builder
 	b.WriteString("---\n")
-	fmt.Fprintf(&b, "id: %03d\ntitle: %s\nkind: %s\nstatus: %s\ncreated: %s\norigin: %s\n",
-		it.ID, it.Title, it.Kind, it.Status, it.Created, it.Origin)
+	fmt.Fprintf(&b, "id: %03d\ntitle: %s\nkind: %s\nstatus: %s\ncreated: %s\n",
+		it.ID, it.Title, it.Kind, it.Status, it.Created)
 	if it.Closed != "" {
 		fmt.Fprintf(&b, "closed: %s\nreason: %s\n", it.Closed, it.Reason)
 	}
@@ -110,8 +109,6 @@ func parse(data []byte) (Item, error) {
 			it.Status = v
 		case "created":
 			it.Created = v
-		case "origin":
-			it.Origin = v
 		case "closed":
 			it.Closed = v
 		case "reason":
@@ -120,7 +117,7 @@ func parse(data []byte) (Item, error) {
 			return Item{}, fmt.Errorf("%w: unknown key %q", ErrCorrupt, k)
 		}
 	}
-	for _, k := range []string{"id", "title", "kind", "status", "created", "origin"} {
+	for _, k := range []string{"id", "title", "kind", "status", "created"} {
 		if !seen[k] {
 			return Item{}, fmt.Errorf("%w: missing %s", ErrCorrupt, k)
 		}
@@ -163,16 +160,12 @@ func CheckAgent(agent string) error {
 	return nil
 }
 
-// CheckNew validates the fields of an item to add. Only task and followup can be added; debt comes from the ponytail
-// marker sync.
-func CheckNew(kind, title, origin string) error {
-	if kind != "task" && kind != "followup" {
-		return fmt.Errorf("%w: kind must be task or followup, got %q", ErrUsage, kind)
+// CheckNew validates the fields of an item to add.
+func CheckNew(kind, title string) error {
+	if !ValidKind(kind) {
+		return fmt.Errorf("%w: kind must be %s, got %q", ErrUsage, strings.Join(kinds, " or "), kind)
 	}
 	if err := checkLine("title", strings.TrimSpace(title)); err != nil {
-		return fmt.Errorf("%w: %v", ErrUsage, err)
-	}
-	if err := checkLine("origin", strings.TrimSpace(origin)); err != nil {
 		return fmt.Errorf("%w: %v", ErrUsage, err)
 	}
 	return nil
@@ -221,11 +214,11 @@ func (l *Ledger) Path(id int) string { return filepath.Join(l.dir, itemName(id))
 
 // Add files a new open item and returns it with its path. The file appears complete or not at all: it is written to a
 // temp file and hard-linked into place, and the link fails if a concurrent Add took the id first.
-func (l *Ledger) Add(kind, title, origin string) (Item, string, error) {
-	if err := CheckNew(kind, title, origin); err != nil {
+func (l *Ledger) Add(kind, title string) (Item, string, error) {
+	if err := CheckNew(kind, title); err != nil {
 		return Item{}, "", err
 	}
-	title, origin = strings.TrimSpace(title), strings.TrimSpace(origin)
+	title = strings.TrimSpace(title)
 	if err := os.MkdirAll(l.dir, 0o755); err != nil {
 		return Item{}, "", err
 	}
@@ -238,7 +231,7 @@ func (l *Ledger) Add(kind, title, origin string) (Item, string, error) {
 		if len(ids) > 0 {
 			next = ids[len(ids)-1] + 1
 		}
-		it := Item{ID: next, Title: title, Kind: kind, Status: StatusOpen, Created: l.today(), Origin: origin, Body: bodyTemplate}
+		it := Item{ID: next, Title: title, Kind: kind, Status: StatusOpen, Created: l.today(), Body: bodyTemplate}
 		err = l.writeAtomic(it, os.Link)
 		if !errors.Is(err, os.ErrExist) {
 			if err != nil {

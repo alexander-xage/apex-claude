@@ -34,7 +34,7 @@ func newLedger(t *testing.T, agent string) *Ledger {
 
 func mustAdd(t *testing.T, l *Ledger, title string) Item {
 	t.Helper()
-	it, _, err := l.Add("task", title, "user")
+	it, _, err := l.Add("task", title)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func mustAdd(t *testing.T, l *Ledger, title string) Item {
 
 func TestRenderParseRoundTrip(t *testing.T) {
 	in := Item{ID: 7, Title: "fix: the #1 thing -- now", Kind: "task", Status: "closed", Created: "2026-09-30",
-		Origin: "LLMTraining:research/011", Closed: "2026-10-01", Reason: "done: see Outcome", Body: "## Goal\nx\n"}
+		Closed: "2026-10-01", Reason: "done: see Outcome", Body: "## Goal\nx\n"}
 	out, err := parse(in.render())
 	if err != nil || out != in {
 		t.Fatalf("round trip:\n got %+v, %v\nwant %+v", out, err, in)
@@ -54,20 +54,16 @@ func TestRenderParseRoundTrip(t *testing.T) {
 func TestAddRejectsUnsafeValues(t *testing.T) {
 	l := newLedger(t, "dev")
 	for _, title := range []string{"", "  ", "a\nid: 999", "a\rb", "bell\x07"} {
-		if _, _, err := l.Add("task", title, "user"); !errors.Is(err, ErrUsage) {
+		if _, _, err := l.Add("task", title); !errors.Is(err, ErrUsage) {
 			t.Errorf("Add(title %q) err = %v, want ErrUsage", title, err)
 		}
 	}
-	if _, _, err := l.Add("task", "ok", "x\ny"); !errors.Is(err, ErrUsage) {
-		t.Errorf("Add(origin with newline) err = %v, want ErrUsage", err)
-	}
 }
 
-// debt items come only from the ponytail marker sync, never from a caller.
-func TestAddRejectsDebtAndUnknownKinds(t *testing.T) {
+func TestAddRejectsUnknownKinds(t *testing.T) {
 	l := newLedger(t, "dev")
 	for _, kind := range []string{"debt", "plan", ""} {
-		if _, _, err := l.Add(kind, "x", "user"); !errors.Is(err, ErrUsage) {
+		if _, _, err := l.Add(kind, "x"); !errors.Is(err, ErrUsage) {
 			t.Errorf("Add(kind %q) err = %v, want ErrUsage", kind, err)
 		}
 	}
@@ -79,10 +75,10 @@ func TestAddAllocatesAfterHighestAndWritesSections(t *testing.T) {
 		t.Fatal(err)
 	}
 	a := mustAdd(t, l, "first")
-	if err := os.WriteFile(filepath.Join(l.dir, "041.md"), (&Item{ID: 41, Title: "t", Kind: "task", Status: "open", Created: "2026-09-01", Origin: "user"}).render(), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(l.dir, "041.md"), (&Item{ID: 41, Title: "t", Kind: "task", Status: "open", Created: "2026-09-01"}).render(), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	b, path, err := l.Add("followup", "second", "001")
+	b, path, err := l.Add("followup", "second")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +103,7 @@ func TestConcurrentAddGetsDistinctIDs(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			it, _, err := l.Add("followup", "x", "user")
+			it, _, err := l.Add("followup", "x")
 			if err != nil {
 				t.Error(err)
 			}
@@ -166,7 +162,7 @@ func TestTransitions(t *testing.T) {
 // The model edits the body between status changes; the binary must never lose it.
 func TestStatusChangePreservesBody(t *testing.T) {
 	l := newLedger(t, "dev")
-	_, path, err := l.Add("task", "a", "user")
+	_, path, err := l.Add("task", "a")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,7 +210,7 @@ func TestOpenValidatesAgent(t *testing.T) {
 func TestListDetectsCorruption(t *testing.T) {
 	l := newLedger(t, "dev")
 	mustAdd(t, l, "a")
-	if err := os.WriteFile(filepath.Join(l.dir, "002.md"), (&Item{ID: 5, Title: "t", Kind: "task", Status: "open", Created: "2026-09-01", Origin: "user"}).render(), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(l.dir, "002.md"), (&Item{ID: 5, Title: "t", Kind: "task", Status: "open", Created: "2026-09-01"}).render(), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := l.List(); !errors.Is(err, ErrCorrupt) {
@@ -223,7 +219,7 @@ func TestListDetectsCorruption(t *testing.T) {
 
 	l = newLedger(t, "dev")
 	for i := 1; i <= 2; i++ {
-		it := Item{ID: i, Title: "t", Kind: "task", Status: "in-progress", Created: "2026-09-01", Origin: "user"}
+		it := Item{ID: i, Title: "t", Kind: "task", Status: "in-progress", Created: "2026-09-01"}
 		if err := os.WriteFile(filepath.Join(l.dir, itemName(i)), it.render(), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -256,7 +252,7 @@ func TestListOrdersInProgressFirst(t *testing.T) {
 
 // The binary wrote the frontmatter, so anything it would not have written must surface as corruption, not be guessed at.
 func TestParseRejectsMalformed(t *testing.T) {
-	ok := "---\nid: 001\ntitle: t\nkind: task\nstatus: open\ncreated: 2026-09-30\norigin: user\n---\nbody\n"
+	ok := "---\nid: 001\ntitle: t\nkind: task\nstatus: open\ncreated: 2026-09-30\n---\nbody\n"
 	if _, err := parse([]byte(ok)); err != nil {
 		t.Fatalf("valid item rejected: %v", err)
 	}
@@ -265,23 +261,25 @@ func TestParseRejectsMalformed(t *testing.T) {
 		t.Fatalf("frontmatter ending in --- without newline: %+v, %v", it, err)
 	}
 	cases := map[string]string{
-		"crlf":           strings.ReplaceAll(ok, "\n", "\r\n"),
-		"no frontmatter": "id: 001\n",
-		"unterminated":   "---\nid: 001\ntitle: t\n",
-		"unknown key":    strings.Replace(ok, "origin: user\n", "origin: user\nowner: x\n", 1),
-		"duplicate key":  strings.Replace(ok, "status: open\n", "status: closed\nstatus: open\n", 1),
-		"bad status":     strings.Replace(ok, "status: open", "status: done", 1),
-		"bad kind":       strings.Replace(ok, "kind: task", "kind: banana", 1),
-		"missing origin": strings.Replace(ok, "origin: user\n", "", 1),
-		"huge id":        strings.Replace(ok, "id: 001", "id: 99999999999999999999", 1),
-		"closed only":    strings.Replace(ok, "origin: user\n", "origin: user\nclosed: 2026-09-30\n", 1),
-		"reason only":    strings.Replace(ok, "origin: user\n", "origin: user\nreason: x\n", 1),
-		"empty origin":   strings.Replace(ok, "origin: user", "origin: ", 1),
-		"signed id":      strings.Replace(ok, "id: 001", "id: +1", 1),
-		"control char":   strings.Replace(ok, "title: t", "title: t\r", 1),
-		"bad line":       strings.Replace(ok, "title: t", "title:t", 1),
-		"closed no date": strings.Replace(ok, "status: open", "status: closed", 1),
-		"open w/ reason": strings.Replace(ok, "origin: user\n", "origin: user\nclosed: 2026-09-30\nreason: x\n", 1),
+		"crlf":            strings.ReplaceAll(ok, "\n", "\r\n"),
+		"no frontmatter":  "id: 001\n",
+		"unterminated":    "---\nid: 001\ntitle: t\n",
+		"unknown key":     strings.Replace(ok, "created: 2026-09-30\n", "created: 2026-09-30\nowner: x\n", 1),
+		"duplicate key":   strings.Replace(ok, "status: open\n", "status: closed\nstatus: open\n", 1),
+		"bad status":      strings.Replace(ok, "status: open", "status: done", 1),
+		"bad kind":        strings.Replace(ok, "kind: task", "kind: banana", 1),
+		"missing created": strings.Replace(ok, "created: 2026-09-30\n", "", 1),
+		"missing id":      strings.Replace(ok, "id: 001\n", "", 1),
+		"missing title":   strings.Replace(ok, "title: t\n", "", 1),
+		"huge id":         strings.Replace(ok, "id: 001", "id: 99999999999999999999", 1),
+		"closed only":     strings.Replace(ok, "created: 2026-09-30\n", "created: 2026-09-30\nclosed: 2026-09-30\n", 1),
+		"reason only":     strings.Replace(ok, "created: 2026-09-30\n", "created: 2026-09-30\nreason: x\n", 1),
+		"empty created":   strings.Replace(ok, "created: 2026-09-30", "created: ", 1),
+		"signed id":       strings.Replace(ok, "id: 001", "id: +1", 1),
+		"control char":    strings.Replace(ok, "title: t", "title: t\r", 1),
+		"bad line":        strings.Replace(ok, "title: t", "title:t", 1),
+		"closed no date":  strings.Replace(ok, "status: open", "status: closed", 1),
+		"open w/ reason":  strings.Replace(ok, "created: 2026-09-30\n", "created: 2026-09-30\nclosed: 2026-09-30\nreason: x\n", 1),
 	}
 	for name, in := range cases {
 		if _, err := parse([]byte(in)); !errors.Is(err, ErrCorrupt) {
@@ -313,7 +311,7 @@ func TestAddFailsOnUnlistedNameCollision(t *testing.T) {
 		t.Skip("case-sensitive filesystem")
 	}
 	done := make(chan error, 1)
-	go func() { _, _, err := l.Add("task", "x", "user"); done <- err }()
+	go func() { _, _, err := l.Add("task", "x"); done <- err }()
 	select {
 	case err := <-done:
 		if !errors.Is(err, ErrCorrupt) {
@@ -327,7 +325,7 @@ func TestAddFailsOnUnlistedNameCollision(t *testing.T) {
 // Items are shared files; the temp-file write path must not leave them owner-only.
 func TestWritesAreWorldReadable(t *testing.T) {
 	l := newLedger(t, "dev")
-	_, path, err := l.Add("task", "x", "user")
+	_, path, err := l.Add("task", "x")
 	if err != nil {
 		t.Fatal(err)
 	}

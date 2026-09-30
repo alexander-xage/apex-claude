@@ -17,11 +17,11 @@ import (
 
 const usage = `usage: apex <verb> [args] --agent <name>
 
-  add <task|followup> <title> [--origin <ref>]   file a new open item, print its path
-  list [--status s,s|all] [--kind k]              default status: in-progress,open
-  start <id>                                      open -> in-progress
-  close <id> <reason>                             -> closed
-  reopen <id>                                     in-progress|closed -> open
+  add <task|followup> <title>          file a new open item, print its path
+  list [--status s,s|all] [--kind k]   default status: in-progress,open
+  start <id>                           open -> in-progress
+  close <id> <reason>                  -> closed
+  reopen <id>                          in-progress|closed -> open
 
 exit: 0 ok, 1 not found, 2 environment, 3 illegal transition, 4 corrupt ledger, 64 usage
 `
@@ -82,11 +82,10 @@ func dispatch(dir, verb string, args []string, stdout io.Writer) error {
 	fs := flag.NewFlagSet(verb, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	agent := fs.String("agent", "", "")
-	var origin, status, kind *string
+	var status, kind *string
 	var want int
 	switch verb {
 	case "add":
-		origin = fs.String("origin", "user", "")
 		want = 2
 	case "list":
 		status = fs.String("status", "in-progress,open", "")
@@ -119,7 +118,7 @@ func dispatch(dir, verb string, args []string, stdout io.Writer) error {
 	var show map[string]bool
 	switch verb {
 	case "add":
-		err = ledger.CheckNew(pos[0], pos[1], *origin)
+		err = ledger.CheckNew(pos[0], pos[1])
 	case "list":
 		show, err = parseStatuses(*status)
 		if err == nil && *kind != "" && !ledger.ValidKind(*kind) {
@@ -145,7 +144,7 @@ func dispatch(dir, verb string, args []string, stdout io.Writer) error {
 	}
 	switch verb {
 	case "add":
-		_, path, err := l.Add(pos[0], pos[1], *origin)
+		_, path, err := l.Add(pos[0], pos[1])
 		if err == nil {
 			fmt.Fprintln(stdout, path)
 		}

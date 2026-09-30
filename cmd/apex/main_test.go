@@ -35,17 +35,13 @@ func apex(t *testing.T, dir string, args ...string) (int, string, string) {
 // The model writes flags after positionals; stdlib flag parsing alone would silently drop them.
 func TestFlagsAfterPositionals(t *testing.T) {
 	root := setup(t)
-	code, out, errs := apex(t, root, "add", "task", "wire the hook", "--agent", "dev", "--origin", "003")
+	code, out, errs := apex(t, root, "add", "task", "wire the hook", "--agent", "dev")
 	if code != 0 {
 		t.Fatalf("exit %d: %s", code, errs)
 	}
 	want := filepath.Join(root, ".claude", "ledger", "dev", "001.md")
 	if strings.TrimSpace(out) != want {
 		t.Fatalf("add printed %q, want %q", out, want)
-	}
-	data, _ := os.ReadFile(want)
-	if !strings.Contains(string(data), "origin: 003\n") {
-		t.Fatalf("origin flag after positionals was dropped:\n%s", data)
 	}
 }
 
@@ -126,7 +122,7 @@ func TestUsageBeatsDiskState(t *testing.T) {
 		{"add", "bogus", "t", "--agent", "ghost"},
 		{"list", "--status", "bogus", "--agent", "dev"},
 		{"list", "--kind", "taks", "--agent", "dev"},
-		{"list", "--origin", "x", "--agent", "dev"},
+		{"list", "--title", "x", "--agent", "dev"},
 		{"start", "1", "--status", "open", "--agent", "dev"},
 		{"close", "1", "a\nb", "--agent", "dev"},
 	} {
