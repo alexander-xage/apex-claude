@@ -137,7 +137,7 @@ graphify 0.9.72: with it set, `update` wrote `graph.json`, `GRAPH_REPORT.md`, `m
 Agents never call `graphify` directly. `apex graph <args>` resolves the main checkout and the current checkout, sets
 `GRAPHIFY_OUT` to `<main>/.claude/graphify/<checkout>/`, and runs `graphify <args>` unchanged. `<checkout>` is `main`
 for the main checkout and the worktree's directory name otherwise, so Agents on different branches never overwrite
-each other's graph. A wrapper rather than an instructed env prefix, because one forgotten prefix writes
+each other's graph. A worktree directory named `main`, or two live worktrees sharing a name, is an error. A wrapper rather than an instructed env prefix, because one forgotten prefix writes
 `graphify-out/` into the repo root.
 
 A worktree's graph lives exactly as long as the worktree does on disk. Every `apex graph` call compares `graphify/*/`

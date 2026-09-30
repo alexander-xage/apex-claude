@@ -5,9 +5,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -55,4 +57,62 @@ func gitOut(dir string, args ...string) (string, error) {
 		return "", fmt.Errorf("git %s: %v: %s", strings.Join(args, " "), err, strings.TrimSpace(stderr.String()))
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+// Checkout names the checkout dir belongs to, given its main checkout: "main" for the main checkout or outside git,
+// the worktree's directory name otherwise. It errors when that name is "main" or another live worktree shares it.
+func Checkout(dir, main string) (string, error) {
+	top, err := gitOut(dir, "rev-parse", "--show-toplevel")
+	if errors.Is(err, errNotRepo) {
+		return "main", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	if top == main {
+		return "main", nil
+	}
+	name := filepath.Base(top)
+	if name == "main" {
+		return "", fmt.Errorf("worktree %s is named main, which is reserved for the main checkout", top)
+	}
+	live, err := LiveWorktrees(dir)
+	if err != nil {
+		return "", err
+	}
+	n := 0
+	for _, w := range live {
+		if w == name {
+			n++
+		}
+	}
+	if n > 1 {
+		return "", fmt.Errorf("%d live worktrees are named %s; rename one so each keeps its own graph", n, name)
+	}
+	return name, nil
+}
+
+// LiveWorktrees returns the directory names of the linked worktrees that exist on disk. Only a directory known to be
+// missing counts as gone: an unreadable one, or a locked one (git keeps it; it may sit on unmounted media), is live.
+func LiveWorktrees(dir string) ([]string, error) {
+	out, err := gitOut(dir, "worktree", "list", "--porcelain")
+	if errors.Is(err, errNotRepo) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for i, block := range strings.Split(out, "\n\n") {
+		lines := strings.Split(block, "\n")
+		path, ok := strings.CutPrefix(lines[0], "worktree ")
+		if !ok || i == 0 {
+			continue
+		}
+		_, err := os.Stat(path)
+		if !errors.Is(err, fs.ErrNotExist) || slices.ContainsFunc(lines, func(l string) bool { return l == "locked" || strings.HasPrefix(l, "locked ") }) {
+			names = append(names, filepath.Base(path))
+		}
+	}
+	return names, nil
 }

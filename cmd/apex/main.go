@@ -22,8 +22,10 @@ const usage = `usage: apex <verb> [args] --agent <name>
   start <id>                           open -> in-progress
   close <id> <reason>                  -> closed
   reopen <id>                          in-progress|closed -> open
+  graph <graphify args>                run graphify on this checkout's graph (no --agent)
 
-exit: 0 ok, 1 not found, 2 environment, 3 illegal transition, 4 corrupt ledger, 64 usage
+exit: 0 ok, 1 not found, 2 environment, 3 illegal transition, 4 corrupt ledger, 64 usage;
+      graph exits with graphify's code, or 128+N when graphify dies by signal N
 `
 
 func main() {
@@ -44,6 +46,9 @@ func run(dir string, args []string, stdout, stderr io.Writer) int {
 	if verb == "-h" || verb == "--help" || verb == "help" {
 		fmt.Fprint(stdout, usage)
 		return 0
+	}
+	if verb == "graph" {
+		return graph(dir, args, stdout, stderr)
 	}
 	err := dispatch(dir, verb, args, stdout)
 	if errors.Is(err, flag.ErrHelp) {

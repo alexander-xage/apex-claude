@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -90,5 +91,90 @@ func TestMainFromSeparateGitDirWorktreeFails(t *testing.T) {
 	git(t, r, "worktree", "add", "-q", "-b", "feat", wt)
 	if got, err := Main(wt); err == nil {
 		t.Fatalf("Main(worktree of separate git dir) = %q, nil; want an error", got)
+	}
+}
+
+func checkout(t *testing.T, dir string) (string, error) {
+	t.Helper()
+	main, err := Main(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return Checkout(dir, main)
+}
+
+func TestCheckoutNames(t *testing.T) {
+	r := newRepo(t)
+	wt := filepath.Join(tempDir(t), "wt-feat")
+	git(t, r, "worktree", "add", "-q", "-b", "feat", wt)
+	sub := filepath.Join(wt, "x", "y")
+	if err := os.MkdirAll(sub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for dir, want := range map[string]string{r: "main", wt: "wt-feat", sub: "wt-feat", tempDir(t): "main"} {
+		if got, err := checkout(t, dir); err != nil || got != want {
+			t.Errorf("Checkout(%s) = %q, %v; want %q", dir, got, err, want)
+		}
+	}
+}
+
+// A worktree directory named main would share the main checkout's graph.
+func TestCheckoutNamedMainFails(t *testing.T) {
+	r := newRepo(t)
+	wt := filepath.Join(tempDir(t), "main")
+	git(t, r, "worktree", "add", "-q", "-b", "feat", wt)
+	if got, err := checkout(t, wt); err == nil {
+		t.Fatalf("Checkout(worktree named main) = %q, nil; want an error", got)
+	}
+}
+
+// Graphs are keyed by worktree directory name, so two live worktrees with one name would share a graph.
+func TestCheckoutDuplicateNameFails(t *testing.T) {
+	r := newRepo(t)
+	a, b := filepath.Join(tempDir(t), "feat"), filepath.Join(tempDir(t), "feat")
+	git(t, r, "worktree", "add", "-q", "-b", "a", a)
+	git(t, r, "worktree", "add", "-q", "-b", "b", b)
+	if got, err := checkout(t, a); err == nil {
+		t.Fatalf("Checkout(duplicate name) = %q, nil; want an error", got)
+	}
+}
+
+// git keeps an entry for a worktree whose directory was deleted until `git worktree prune`; only directories on disk
+// count, except a locked worktree, which git keeps too.
+func TestLiveWorktreesKeepsOnDiskAndLocked(t *testing.T) {
+	r := newRepo(t)
+	keep, gone, locked := filepath.Join(tempDir(t), "keep"), filepath.Join(tempDir(t), "gone"), filepath.Join(tempDir(t), "locked")
+	git(t, r, "worktree", "add", "-q", "-b", "a", keep)
+	git(t, r, "worktree", "add", "-q", "-b", "b", gone)
+	git(t, r, "worktree", "add", "-q", "--lock", "-b", "c", locked)
+	for _, d := range []string{gone, locked} {
+		if err := os.RemoveAll(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got, err := LiveWorktrees(r)
+	if err != nil || strings.Join(got, ",") != "keep,locked" {
+		t.Fatalf("LiveWorktrees = %v, %v; want [keep locked]", got, err)
+	}
+	if got, err := LiveWorktrees(tempDir(t)); err != nil || len(got) != 0 {
+		t.Fatalf("LiveWorktrees(non-git) = %v, %v; want none", got, err)
+	}
+}
+
+// Liveness only feeds a delete; when a directory cannot be checked, keeping its graph is the safe answer.
+func TestLiveWorktreesKeepsUnreadable(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root ignores directory permissions")
+	}
+	r := newRepo(t)
+	parent := tempDir(t)
+	git(t, r, "worktree", "add", "-q", "-b", "a", filepath.Join(parent, "hidden"))
+	if err := os.Chmod(parent, 0); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(parent, 0o755) })
+	got, err := LiveWorktrees(r)
+	if err != nil || strings.Join(got, ",") != "hidden" {
+		t.Fatalf("LiveWorktrees = %v, %v; want [hidden]", got, err)
 	}
 }
