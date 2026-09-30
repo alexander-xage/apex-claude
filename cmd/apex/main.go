@@ -22,6 +22,7 @@ const usage = `usage: apex <verb> [args] --agent <name>
   start <id>                           open -> in-progress
   close <id> <reason>                  -> closed
   reopen <id>                          in-progress|closed -> open
+  retitle <id> <title>                 replace an item's title, any status
   graph <graphify args>                run graphify on this checkout's graph (no --agent)
 
 exit: 0 ok, 1 not found, 2 environment, 3 illegal transition, 4 corrupt ledger, 64 usage;
@@ -97,7 +98,7 @@ func dispatch(dir, verb string, args []string, stdout io.Writer) error {
 		kind = fs.String("kind", "", "")
 	case "start", "reopen":
 		want = 1
-	case "close":
+	case "close", "retitle":
 		want = 2
 	default:
 		return usageErr("unknown verb %q", verb)
@@ -134,6 +135,9 @@ func dispatch(dir, verb string, args []string, stdout io.Writer) error {
 		if err == nil && verb == "close" {
 			err = ledger.CheckReason(pos[1])
 		}
+		if err == nil && verb == "retitle" {
+			err = ledger.CheckTitle(pos[1])
+		}
 	}
 	if err != nil {
 		return err
@@ -162,6 +166,8 @@ func dispatch(dir, verb string, args []string, stdout io.Writer) error {
 		err = l.Reopen(id)
 	case "close":
 		err = l.Close(id, pos[1])
+	case "retitle":
+		err = l.Retitle(id, pos[1])
 	}
 	if err == nil {
 		fmt.Fprintln(stdout, l.Path(id))

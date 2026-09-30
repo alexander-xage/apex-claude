@@ -165,6 +165,11 @@ func CheckNew(kind, title string) error {
 	if !ValidKind(kind) {
 		return fmt.Errorf("%w: kind must be %s, got %q", ErrUsage, strings.Join(kinds, " or "), kind)
 	}
+	return CheckTitle(title)
+}
+
+// CheckTitle validates an item title.
+func CheckTitle(title string) error {
 	if err := checkLine("title", strings.TrimSpace(title)); err != nil {
 		return fmt.Errorf("%w: %v", ErrUsage, err)
 	}
@@ -372,6 +377,19 @@ func (l *Ledger) Reopen(id int) error {
 		return fmt.Errorf("%w: %03d is already open", ErrTransition, id)
 	}
 	it.Status, it.Closed, it.Reason = StatusOpen, "", ""
+	return l.writeAtomic(it, os.Rename)
+}
+
+// Retitle replaces an item's title in any status.
+func (l *Ledger) Retitle(id int, title string) error {
+	if err := CheckTitle(title); err != nil {
+		return err
+	}
+	it, err := l.Get(id)
+	if err != nil {
+		return err
+	}
+	it.Title = strings.TrimSpace(title)
 	return l.writeAtomic(it, os.Rename)
 }
 

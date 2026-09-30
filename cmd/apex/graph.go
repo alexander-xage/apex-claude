@@ -44,7 +44,8 @@ func graph(dir string, args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-// graphOut returns this checkout's graph directory, pruning stale graphs and excluding .claude/ on the way.
+// graphOut returns this checkout's graph directory, pruning stale graphs, self-ignoring the graph directory and
+// excluding .claude/ on the way.
 func graphOut(dir string) (string, error) {
 	main, err := repo.Main(dir)
 	if err != nil {
@@ -60,6 +61,9 @@ func graphOut(dir string) (string, error) {
 	}
 	out := filepath.Join(graphs, checkout)
 	if err := os.MkdirAll(out, 0o755); err != nil {
+		return "", err
+	}
+	if err := selfIgnore(graphs); err != nil {
 		return "", err
 	}
 	return out, excludeProtocolState(out)
@@ -87,6 +91,22 @@ func pruneGraphs(dir, graphs string) error {
 		}
 	}
 	return nil
+}
+
+// selfIgnore makes the graph directory hide itself from git, as tool caches do: graphs are rebuilt, never committed.
+func selfIgnore(graphs string) error {
+	f, err := os.OpenFile(filepath.Join(graphs, ".gitignore"), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+	if errors.Is(err, os.ErrExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	_, err = f.WriteString("*\n")
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
+	return err
 }
 
 // excludeProtocolState adds .claude to graphify's persisted excludes (docs/design/agents.md, Graphify discipline).

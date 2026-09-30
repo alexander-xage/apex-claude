@@ -119,6 +119,7 @@ func TestUsageBeatsDiskState(t *testing.T) {
 	}
 	for _, args := range [][]string{
 		{"start", "abc", "--agent", "ghost"},
+		{"retitle", "1", "a\nb", "--agent", "ghost"},
 		{"add", "bogus", "t", "--agent", "ghost"},
 		{"list", "--status", "bogus", "--agent", "dev"},
 		{"list", "--kind", "taks", "--agent", "dev"},
@@ -194,5 +195,19 @@ func TestBadAgentIsUsageEvenWhenGitFails(t *testing.T) {
 	}
 	if code, _, errs := apex(t, wt, "start", "1", "--agent", "Dev"); code != 64 {
 		t.Fatalf("exit %d, want 64 (%s)", code, errs)
+	}
+}
+
+func TestRetitleVerb(t *testing.T) {
+	root := setup(t)
+	apex(t, root, "add", "task", "old", "--agent", "dev")
+	if code, _, errs := apex(t, root, "retitle", "1", "new title", "--agent", "dev"); code != 0 {
+		t.Fatalf("retitle: exit %d (%s)", code, errs)
+	}
+	if _, out, _ := apex(t, root, "list", "--agent", "dev"); !strings.Contains(out, "new title") {
+		t.Fatalf("list after retitle:\n%s", out)
+	}
+	if code, _, _ := apex(t, root, "retitle", "1", "--agent", "dev"); code != 64 {
+		t.Fatalf("retitle without title: exit %d, want 64", code)
 	}
 }

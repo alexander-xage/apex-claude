@@ -9,7 +9,7 @@ Design workspace for the fresh slate. The previous Apex lives in `example/` as a
   directly, through a subagent, or through Ultracode.
 - A handoff's startup procedure points at the Agent's live notes (which replace Claude memory) and at a graphify update.
 - Everything lives under `.claude/`. The protocol behaves identically whether a path is gitignored or tracked, and never
-  mentions which.
+  mentions which. The one exception is `.claude/graphify/`, which `apex graph` gitignores on first run.
 - Binary-light: Go only where the answer must be deterministic.
 - Ponytail and graphify are required dependencies.
 - Git is governed by a git-discipline skill with per-repo conventions; push and PR happen only on the operator's word.
@@ -94,6 +94,10 @@ An item too big for one pass closes with `reason: split: 008-010`, and the child
 `open -> in-progress -> closed`; `close` also works from open; `reopen` returns either to open. At most one item per
 Agent is in progress.
 
+The binary owns the frontmatter, so it also carries the only correction path: `apex retitle <id> <title>` replaces a
+title in any status, and a wrong close reason is fixed with `reopen` then `close`, which also moves `closed:` to the
+day of the correction.
+
 ## Session flow
 
 1. The user invokes `/<agent>`. The Agent reads `LIVE.md`, its pre-loads and `handoff.md`, then runs the handoff's
@@ -159,7 +163,8 @@ replaces files atomically and the rebuild is deterministic; the last writer wins
 **Scope.** The graph describes code, not protocol state. `apex graph` adds `.claude` to the excludes graphify persists
 in the graph directory (`.graphify_build.json`, an internal graphify 0.9.x file), so ledger items, handoffs and notes
 never enter the graph and no file lands in the checkout. `apex graph extract --exclude X` replaces that list for its
-run, so an extract item passes `--exclude .claude` alongside its own excludes.
+run, so an extract item passes `--exclude .claude` alongside its own excludes. Graphs are rebuilt, never committed:
+`apex graph` writes a `.gitignore` of `*` into `.claude/graphify/` when missing, so its own output hides itself.
 
 **Reading.** Every read passes `--budget`. A truncated answer means narrowing the question, not raising the budget
 blindly.
@@ -196,7 +201,9 @@ The `apex-init` skill adds a short section to the repo's `CLAUDE.md` that frames
   2. updates `LIVE.md`;
   3. writes the handoff;
   4. cleans up what the session started: scratch files, servers, merged worktrees;
-  5. reports unpushed commits. This is the only point where pushing comes up.
+  5. commits the session's `.claude/` changes per git-discipline, in the main checkout on whatever branch it has checked
+     out, staging only the `.claude/` paths the session changed;
+  6. reports unpushed commits. This is the only point where pushing comes up.
 
 ## Auto-memory
 

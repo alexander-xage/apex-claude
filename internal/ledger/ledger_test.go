@@ -336,3 +336,25 @@ func TestWritesAreWorldReadable(t *testing.T) {
 		t.Fatalf("mode = %v, %v; want 0644", fi.Mode().Perm(), err)
 	}
 }
+
+// A wrong title must be fixable without re-filing the item, whatever its status, and the body must survive.
+func TestRetitle(t *testing.T) {
+	l := newLedger(t, "dev")
+	mustAdd(t, l, "tpyo")
+	if err := l.Close(1, "done: shipped"); err != nil {
+		t.Fatal(err)
+	}
+	if err := l.Retitle(1, "  typo fixed  "); err != nil {
+		t.Fatal(err)
+	}
+	it, err := l.Get(1)
+	if err != nil || it.Title != "typo fixed" || it.Status != StatusClosed || it.Reason != "done: shipped" || it.Body != bodyTemplate {
+		t.Fatalf("after retitle: %+v, %v", it, err)
+	}
+	if err := l.Retitle(1, "a\nid: 9"); !errors.Is(err, ErrUsage) {
+		t.Errorf("newline title: err = %v, want ErrUsage", err)
+	}
+	if err := l.Retitle(9, "x"); !errors.Is(err, ErrNotFound) {
+		t.Errorf("missing item: err = %v, want ErrNotFound", err)
+	}
+}

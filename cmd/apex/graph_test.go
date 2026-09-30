@@ -88,7 +88,9 @@ func TestGraphPrunesGraphsOfRemovedWorktrees(t *testing.T) {
 	entries, _ := os.ReadDir(graphs)
 	var got []string
 	for _, e := range entries {
-		got = append(got, e.Name())
+		if e.IsDir() {
+			got = append(got, e.Name())
+		}
 	}
 	if strings.Join(got, ",") != "keep,main" {
 		t.Fatalf("graphs after prune = %v, want [keep main]", got)
@@ -144,8 +146,8 @@ func TestGraphExcludesClaudeViaBuildConfig(t *testing.T) {
 			t.Errorf("build config seen by graphify = %s; missing %s", stdout, want)
 		}
 	}
-	if out, _ := exec.Command("git", "-C", r, "status", "--porcelain", "--untracked-files=all", "--", ":!.claude/graphify").Output(); len(out) != 0 {
-		t.Errorf("apex graph left files in the checkout:\n%s", out)
+	if out, _ := exec.Command("git", "-C", r, "status", "--porcelain", "--untracked-files=all").Output(); len(out) != 0 {
+		t.Errorf("apex graph left untracked files, graph output included:\n%s", out)
 	}
 	code, _, _ = apex(t, r, "graph", "update", ".")
 	data, _ := os.ReadFile(filepath.Join(out, ".graphify_build.json"))
@@ -169,5 +171,24 @@ func TestGraphRejectsCorruptBuildConfig(t *testing.T) {
 		if code, _, errs := apex(t, r, "graph", "update", "."); code != 2 || !strings.Contains(errs, "JSON object") {
 			t.Errorf("config %s: exit %d (%s), want 2 naming a JSON object", bad, code, errs)
 		}
+	}
+}
+
+// The graph dir's .gitignore is written once; an operator's edit to it must survive every later run.
+func TestGraphKeepsExistingGitignore(t *testing.T) {
+	fakeGraphify(t)
+	r := gitRepo(t)
+	graphs := filepath.Join(r, ".claude", "graphify")
+	if err := os.MkdirAll(graphs, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(graphs, ".gitignore"), []byte("cache/\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if code, _, errs := apex(t, r, "graph", "update", "."); code != 7 {
+		t.Fatalf("exit %d (%s), want graphify's 7", code, errs)
+	}
+	if data, _ := os.ReadFile(filepath.Join(graphs, ".gitignore")); string(data) != "cache/\n" {
+		t.Fatalf(".gitignore overwritten: %q", data)
 	}
 }
