@@ -186,6 +186,35 @@ blindly.
 **Never.** `hook install`, `claude install`, `watch`, `save-result`/`reflect` (graph memory overlaps `LIVE.md`), and
 `extract` (LLM semantic extraction) outside a ledger item created for it.
 
+## PR review
+
+`/pr-review <pr> [general|ponytail|security|mega]` makes the session the Master Reviewer for one pull request. It owns
+no ledger and no handoff: review stays a single-use role.
+
+```mermaid
+flowchart LR
+  co[check out PR] --> rev[Reviewers, one per slice per lens]
+  ex[existing PR comments] --> judge
+  rev --> judge[Judges A and B]
+  judge --> doc[findings document]
+  doc --> audit[Auditors A and B]
+  audit --> fmt[Master formats GitHub review]
+  fmt --> edit[Editor]
+  edit --> op[operator reads, then posts]
+```
+
+- The pull request is checked out in place when the checkout is clean, and into a worktree otherwise.
+- The workflow is authored per pull request from the skeleton in the skill and passed inline; it is never saved.
+- Two rules: at most 10 agents run at once, and every agent runs at `medium` effort or lower.
+- Models are aliases (`sonnet` reviewers, `opus` judges and editor, `fable` auditors), so each role follows the latest
+  model of its tier.
+- A and B never see each other's answer. What both keep goes on, what both drop is dropped, and a split goes one
+  stage up: judges to auditors, auditors to the Master Reviewer.
+- `NIT` and `LOW` findings go in the main comment; `ASK` and `ISSUE` go inline, and the main comment only points at
+  them.
+- Nothing is posted until the operator has read the draft and said how to post it.
+- `mega` runs every lens in order and combines the findings before judging. The security lens is a stub.
+
 ## Git discipline
 
 The `git-discipline` skill keeps the message rules of the current `atomic-git-discipline`: Conventional Commits, terse

@@ -1,6 +1,6 @@
 PREFIX ?= $(HOME)/.local/bin
 CLAUDE_DIR ?= $(or $(CLAUDE_CONFIG_DIR),$(HOME)/.claude)
-SKILLS := agent-protocol graphify-discipline git-discipline sign-off apex-init
+SKILLS := agent-protocol graphify-discipline git-discipline sign-off apex-init pr-review
 # Marks a skill directory as installed by apex; install and uninstall never touch one without it.
 MARK := .apex-installed
 # The output style is one file, so its own frontmatter name is the ownership mark.
@@ -36,3 +36,4 @@ check:
 
 test:
 	go test ./...
+	@if command -v node >/dev/null; then node scripts/check-pr-review.mjs; else echo "skipped scripts/check-pr-review.mjs: node is not on PATH"; fi

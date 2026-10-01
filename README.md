@@ -67,3 +67,4 @@ with graphify's own code, or 128+N when graphify dies by signal N.
 | `/git-discipline` | commit rules and per-repo conventions from `.claude/git.md` |
 | `/sign-off` | ends a session: log, `LIVE.md`, handoff, cleanup, unpushed commits |
 | `/apex-init` | adopts the protocol in a repo: initialize, migrate, or report conformant |
+| `/pr-review <pr> [mode]` | reviews one pull request through a one-off workflow and serves the draft review before posting; modes `general`, `ponytail`, `security` (stub), `mega` |
