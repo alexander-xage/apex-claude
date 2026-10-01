@@ -53,7 +53,7 @@ then the verb exits 1. `/apex-init` creates the role card.
 | `close <id> <reason>` | to closed |
 | `reopen <id>` | in-progress or closed to open |
 | `retitle <id> <title>` | replaces an item's title, any status |
-| `graph <graphify args>` | runs graphify against this checkout's graph |
+| `graph [--name n] <graphify args>` | runs graphify against this checkout's graph, or its named graph `n` |
 
 Exit codes: 0 ok, 1 not found, 2 environment, 3 illegal transition, 4 corrupt ledger, 64 usage. `graph` exits
 with graphify's own code, or 128+N when graphify dies by signal N.

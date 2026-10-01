@@ -192,3 +192,26 @@ func TestGraphKeepsExistingGitignore(t *testing.T) {
 		t.Fatalf(".gitignore overwritten: %q", data)
 	}
 }
+
+func TestGraphNameSelectsANestedGraph(t *testing.T) {
+	fakeGraphify(t)
+	r := gitRepo(t)
+	_, out, _ := apex(t, r, "graph", "--name", "web", "update", "web", "--name", "kept")
+	want := filepath.Join(r, ".claude", "graphify", "main", "graphs", "web")
+	if !strings.Contains(out, "OUT="+want+"\n") || !strings.Contains(out, "ARG[update]\nARG[web]\nARG[--name]\nARG[kept]\n") {
+		t.Fatalf("output:\n%s\nwant OUT=%s and only the leading --name consumed", out, want)
+	}
+	if data, err := os.ReadFile(filepath.Join(want, ".graphify_build.json")); err != nil || !strings.Contains(string(data), ".claude") {
+		t.Fatalf("named graph must exclude .claude too: %v %s", err, data)
+	}
+}
+
+func TestGraphNameRejectsPathsAndMissingValue(t *testing.T) {
+	fakeGraphify(t)
+	r := gitRepo(t)
+	for _, args := range [][]string{{"graph", "--name"}, {"graph", "--name", "../x", "update", "."}, {"graph", "--name", "a/b"}} {
+		if code, out, _ := apex(t, r, args...); code != 64 || strings.Contains(out, "OUT=") {
+			t.Fatalf("%v: exit %d out %q, want 64 and graphify not run", args, code, out)
+		}
+	}
+}

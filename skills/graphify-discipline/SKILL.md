@@ -18,6 +18,24 @@ has its own graph.
 
 Never pass `--graph` or `--out`; `apex graph` already points graphify at the right place.
 
+## Named graphs
+
+A repo with distinct areas can keep a smaller graph per area beside the default one. `--name <n>` comes directly
+after `graph` and selects `<main>/.claude/graphify/<checkout>/graphs/<n>/`; the path given to `update` sets what that
+graph covers.
+
+```bash
+apex graph --name web update scoreboard/web
+apex graph --name web query "where is the score table rendered" --budget 1500
+```
+
+- The default graph still covers the whole checkout and is the only one with edges that cross areas. Ask it when a
+  question spans areas; ask a named graph when the question stays inside one and the default answer is noisy.
+- `<repo>/.claude/LIVE.md` lists each named graph as `<name>: <path>`. Add a line when you create one, with the
+  operator's agreement. Every rule here applies per graph: wherever this skill says `apex graph update .`, also run
+  `apex graph --name <n> update <path>` for each listed graph.
+- A name is lowercase letters, digits and hyphens. Anything else exits 64.
+
 Everything under `.claude/graphify/` (graphs, dated snapshot directories, `.graphify_root`, `cache/`) belongs to
 graphify. Never edit it; the one exception is deleting `graph.json` as the Errors table says.
 
@@ -92,7 +110,7 @@ that no longer exist. A missing graph after a worktree is removed is expected.
 | Symptom | Action |
 |---|---|
 | `update` exits 1 with `Refusing to overwrite ... Pass --force` | report it to the operator; do not force |
-| `Cannot read .../graph.json ... Delete the file and run a full rebuild` from `update`, or a `json.decoder.JSONDecodeError` traceback from a read | delete `<main>/.claude/graphify/<checkout>/graph.json`, then `apex graph update .`; `--force` does not bypass this |
+| `Cannot read .../graph.json ... Delete the file and run a full rebuild` from `update`, or a `json.decoder.JSONDecodeError` traceback from a read | delete `graph.json` in the directory of the graph you were using, then update that graph; `--force` does not bypass this |
 | a read fails with `graph file not found` | `apex graph update .`, then read again |
 | `No node matching` | take the exact label from a `query` answer |
 | `Ambiguous` | retry with `<path>::<symbol>` or the node id it lists |

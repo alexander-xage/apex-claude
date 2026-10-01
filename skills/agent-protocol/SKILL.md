@@ -36,7 +36,7 @@ never run stateful verbs.
 | `apex close <id> <reason> --agent <a>` | to closed, from open or in-progress, prints the item path |
 | `apex reopen <id> --agent <a>` | in-progress or closed back to open, prints the item path |
 | `apex retitle <id> <title> --agent <a>` | replaces the item's title in any status, prints the item path |
-| `apex graph <graphify args>` | graphify on this checkout's graph; no `--agent` |
+| `apex graph [--name n] <graphify args>` | graphify on this checkout's graph, or its named graph `n`; no `--agent` |
 
 | Exit | Meaning | Response |
 |---|---|---|

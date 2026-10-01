@@ -8,19 +8,31 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"syscall"
 
 	"apex/internal/repo"
 )
 
+var graphName = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
+
 func graph(dir string, args []string, stdout, stderr io.Writer) int {
+	// --name is apex's own flag, so it is read only as the first argument; everything after goes to graphify unchanged.
+	name := ""
+	if len(args) > 0 && args[0] == "--name" {
+		if len(args) < 2 || !graphName.MatchString(args[1]) {
+			fmt.Fprintln(stderr, "apex graph: --name takes a graph name of lowercase letters, digits and hyphens")
+			return 64
+		}
+		name, args = args[1], args[2:]
+	}
 	bin, err := exec.LookPath("graphify")
 	if err != nil {
 		fmt.Fprintln(stderr, "apex graph: graphify is not on PATH; install it with `uv tool install graphifyy`")
 		return 2
 	}
-	out, err := graphOut(dir)
+	out, err := graphOut(dir, name)
 	if err != nil {
 		fmt.Fprintln(stderr, "apex graph:", err)
 		return 2
@@ -45,8 +57,9 @@ func graph(dir string, args []string, stdout, stderr io.Writer) int {
 }
 
 // graphOut returns this checkout's graph directory, pruning stale graphs, self-ignoring the graph directory and
-// excluding .claude/ on the way.
-func graphOut(dir string) (string, error) {
+// excluding .claude/ on the way. A named graph nests under graphs/ in the checkout's directory, so it is pruned with
+// its checkout and cannot collide with the files graphify keeps beside the default graph.
+func graphOut(dir, name string) (string, error) {
 	main, err := repo.Main(dir)
 	if err != nil {
 		return "", err
@@ -60,6 +73,9 @@ func graphOut(dir string) (string, error) {
 		return "", err
 	}
 	out := filepath.Join(graphs, checkout)
+	if name != "" {
+		out = filepath.Join(out, "graphs", name)
+	}
 	if err := os.MkdirAll(out, 0o755); err != nil {
 		return "", err
 	}

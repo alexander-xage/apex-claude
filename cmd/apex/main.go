@@ -23,7 +23,7 @@ const usage = `usage: apex <verb> [args] --agent <name>
   close <id> <reason>                  -> closed
   reopen <id>                          in-progress|closed -> open
   retitle <id> <title>                 replace an item's title, any status
-  graph <graphify args>                run graphify on this checkout's graph (no --agent)
+  graph [--name n] <graphify args>     run graphify on this checkout's graph, or its named graph n (no --agent)
 
 exit: 0 ok, 1 not found, 2 environment, 3 illegal transition, 4 corrupt ledger, 64 usage;
       graph exits with graphify's code, or 128+N when graphify dies by signal N

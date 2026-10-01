@@ -61,7 +61,7 @@ flowchart LR
   LIVE.md                      shared notes: facts true for every Agent in this repo
   ledger/<agent>/NNN.md        one item per file, never deleted
   ledger/<agent>/handoff.md    one file, overwritten
-  graphify/<checkout>/         one graph per checkout
+  graphify/<checkout>/         one graph per checkout, plus named graphs under graphs/<name>/
   git.md                       this repo's commit, push and PR conventions
 ```
 
@@ -158,6 +158,11 @@ Agents never call `graphify` directly. `apex graph <args>` resolves the main che
 for the main checkout and the worktree's directory name otherwise, so Agents on different branches never overwrite
 each other's graph. A worktree directory named `main`, or two live worktrees sharing a name, is an error. A wrapper
 rather than an instructed env prefix, because one forgotten prefix writes `graphify-out/` into the repo root.
+
+A checkout can hold named graphs beside its default one. `apex graph --name <n> <args>` points `GRAPHIFY_OUT` at
+`<main>/.claude/graphify/<checkout>/graphs/<n>/`, and the path given to `update` scopes the graph to one area of the
+repo. The default graph stays whole, so edges between areas are never lost; a named graph only gives smaller answers
+inside its area. `.claude/LIVE.md` lists the named graphs, and they are pruned with their checkout.
 
 A worktree's graph lives exactly as long as the worktree does on disk. Every `apex graph` call compares `graphify/*/`
 against `git worktree list` and deletes each graph whose worktree directory no longer exists.
