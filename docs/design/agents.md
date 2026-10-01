@@ -14,6 +14,8 @@ Design workspace for the fresh slate. The previous Apex lives in `example/` as a
 - Ponytail and graphify are required dependencies.
 - The protocol skills install as user skills, not a plugin, so they keep bare names (`/apex-init`); `make install`
   refuses to run without ponytail and graphify.
+- One output style, `Apex`, ships with the skills and governs replies only: answer first, terse, ledger items cited by
+  id, a completion claim backed by the command that proved it. It is opt-in through `/output-style`.
 - Git is governed by a git-discipline skill with per-repo conventions; push and PR happen only on the operator's word.
 
 ## What an Agent is
@@ -136,6 +138,11 @@ reconcile State against what changed.
 
 - Peers talk through `ListAgents` and `SendMessage`.
 - A peer can file an item into another Agent's ledger; only the owner starts or closes it.
+- An Agent that receives a request replies right away when it has no item in progress, and otherwise files the request
+  in its own ledger and replies with the item id.
+- Peer traffic stays out of the operator's chat: the Agent acknowledges in one line and never repeats to the operator
+  what it sent to a peer, unless it needs the operator's answer.
+- `apex-init` writes these rules into the repo's `CLAUDE.md` section, so they hold before any skill loads.
 
 ## Graphify discipline
 

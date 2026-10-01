@@ -13,15 +13,15 @@ Requires Go 1.26+, `graphify` 0.9.72+ on `PATH` (`uv tool install graphifyy`), a
 
 ```sh
 git clone git@github.com:FNGApex/apex-claude.git && cd apex-claude
-make install      # apex -> ~/.local/bin, skills -> ${CLAUDE_CONFIG_DIR:-~/.claude}/skills
-make uninstall    # removes both
+make install      # apex -> ~/.local/bin; skills and the Apex output style -> ${CLAUDE_CONFIG_DIR:-~/.claude}
+make uninstall    # removes all three
 ```
 
-`make install` stops if graphify or ponytail is missing, or if a skill folder of the same name exists that it did not
-install; it never overwrites or removes a skill of yours. `PREFIX` must be on the `PATH` of the shell Claude Code
+`make install` stops if graphify or ponytail is missing, or if a skill folder or `output-styles/apex.md` of the same
+name exists that it did not install; it never overwrites or removes a file of yours. `PREFIX` must be on the `PATH` of the shell Claude Code
 runs Bash in; every skill calls a bare `apex`. The skills install as user skills, not as a plugin, so they keep bare
 names (`/apex-init`, `/sign-off`); plugin skills are always prefixed with the plugin name. Restart Claude Code after
-installing.
+installing. The output style is optional: pick it with `/output-style Apex`.
 
 Then adopt the protocol in a repo with one session that runs `/apex-init`.
 

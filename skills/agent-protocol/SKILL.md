@@ -184,5 +184,16 @@ A fact goes in one file, never both. Move it to `<repo>/.claude/LIVE.md` once a 
   or from a `LIVE.md`, then run `cd <peer home repo> && apex add <kind> <title> --agent <peer>` as one command; `apex`
   has no directory flag. Write `From: <your repo>:<you>/<your item id>` in its Goal, then tell the peer with
   `SendMessage` if `ListAgents` shows it running.
+- When a peer's message asks you for something, what you do depends on `apex list --agent <agent>`:
+
+  | Your state | Do |
+  |---|---|
+  | no item in progress | act on the request and reply with `SendMessage` right away |
+  | an item in progress | `apex add <kind> <title> --agent <agent>`, write `From: <peer repo>:<peer>/<peer item id>` in its Goal, reply with the new item's id, and return to your item |
+
+  A message that announces an item the peer already filed in your ledger is not filed again.
+- Peer traffic stays out of the operator's chat. Tell the operator in one line that a peer's message arrived and was
+  answered or filed; never repeat to the operator what you sent to a peer. Put the content in front of the operator
+  only when you need the operator's answer.
 - Only the owner starts or closes an item. A peer only files: it never runs `start`, `close`, `reopen` or `retitle`
   with another Agent's name.
