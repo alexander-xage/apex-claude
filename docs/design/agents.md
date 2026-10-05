@@ -218,7 +218,7 @@ flowchart LR
 ## Git discipline
 
 The `git-discipline` skill keeps the message rules of the current `atomic-git-discipline`: Conventional Commits, terse
-subject, body only for a non-obvious why, no AI attribution. It changes two things.
+subject, body only for a non-obvious why, no AI attribution. It changes three things.
 
 1. **Per-repo conventions.** Each repo states its own commit, push and PR conventions in `.claude/git.md`: message
    format, branch naming, ticket prefixes, remotes, PR template. The skill reads that file first and falls back to its
@@ -232,6 +232,14 @@ subject, body only for a non-obvious why, no AI attribution. It changes two thin
 | PR | only when the operator asks for one |
 
 The Agent never reminds the operator to open a PR, and says nothing about pushing until the operator gives Sign off.
+
+3. **Few commits.** A commit is a unit someone would review or revert on its own, never a save point, and
+   `Commit: automatically` does not mean committing more often. The Agent considers a commit only when a ledger item
+   closes, at Sign off, or before a branch switch, rebase or worktree removal. It then commits only when the work is
+   whole, stands alone under its subject line, and is more than `.claude/` bookkeeping; bookkeeping waits for the next
+   commit that carries code, or for Sign off. Otherwise the work stays in the tree and the handoff's State names it.
+   The check is silent: the operator hears of a commit only when approval is required and the check passed. A direct
+   order to commit skips the check.
 
 ## Session start and Sign off
 

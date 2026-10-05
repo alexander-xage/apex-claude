@@ -104,12 +104,11 @@ starting another.
    trap. Skip it when nothing durable came up.
 7. Write `## Outcome`.
 8. `apex close <id> "done: <one line>" --agent <agent>`.
-9. Commit the item's work per `git-discipline`: the code plus the item's `.claude/` changes. In a worktree, the
-   code commits in the worktree and the `.claude/` changes commit in `<repo>`. An item with no code commits its
-   `.claude/` changes alone, like any other.
-10. Rewrite `handoff.md` after the commit, so `head` covers the item's code. It rides in the next item's commit.
-
-`.claude/` files may be committed at any time, per `git-discipline`.
+9. Run the commit check in `git-discipline`, silently. When it passes, commit the item's work: the code plus the
+   pending `.claude/` changes. In a worktree, the code commits in the worktree and the `.claude/` changes commit in
+   `<repo>`. When it fails, commit nothing; an item with no code leaves its `.claude/` changes for a later commit.
+10. Rewrite `handoff.md` after step 9, so `head` covers any commit made there; State names work left uncommitted.
+    The handoff rides in a later commit.
 
 Every close reason starts with one of these prefixes:
 
@@ -121,8 +120,8 @@ Every close reason starts with one of these prefixes:
 
 ### Drop an item
 
-Close it straight from open, without starting it: `apex close <id> "dropped: <why>" --agent <agent>`, then commit
-as in step 9.
+Close it straight from open, without starting it: `apex close <id> "dropped: <why>" --agent <agent>`. Its ledger
+change rides in a later commit.
 
 ### Split an item
 

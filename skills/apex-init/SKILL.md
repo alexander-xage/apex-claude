@@ -238,5 +238,5 @@ deleted in the repo, staged by explicit path. A file on the 4.3 list of files al
 edits: leave it out, or name it to the operator and stage it only on their yes.
 
 After a migration, write each migrated handoff's `checkout`, `branch` and `head` from the main checkout, whether or
-not the operator approved the commit, so the next session's freshness check has values to run on. If the commit
-happened, commit `.claude/` again.
+not the operator approved the commit, so the next session's freshness check has values to run on. The
+handoffs written here ride in a later commit, per `git-discipline`.
