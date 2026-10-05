@@ -1,7 +1,7 @@
 ---
 checkout: /Users/alexanderstroev/Documents/GitHub/apex-claude
 branch: fresh-slate
-head: 63286fb04a89269a4caf76e01525f971a5867ba2
+head: 3873de2ede7cd97bfa902a0c74296c4dad1d79f7
 ---
 ## Startup
 invoke the Agent skill (reads both LIVE.md files); apex graph update .; apex list --agent main
