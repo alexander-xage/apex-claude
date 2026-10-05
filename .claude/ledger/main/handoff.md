@@ -1,31 +1,32 @@
 ---
 checkout: /Users/alexanderstroev/Documents/GitHub/apex-claude
 branch: fresh-slate
-head: 3873de2ede7cd97bfa902a0c74296c4dad1d79f7
+head: b67622a3524e735953ad52bd94e6f732978a6fe8
 ---
 ## Startup
 invoke the Agent skill (reads both LIVE.md files); apex graph update .; apex list --agent main
 
 ## State
-No item in progress; the ledger is empty. Carried from the root `HANDOFF.md` of 2026-10-01 by `apex-init` on
-2026-10-05.
+No item in progress. 001 closed: `git-discipline` section 3 "When to commit" gates commits behind a silent
+worth-it check; `agent-protocol`, `apex-init` and `docs/design/agents.md` follow it. This handoff is uncommitted and
+rides in a later commit.
 
-`fresh-slate` is 13 commits ahead of `master` and pushed to `fork`; no PR is open. `tmp/` (dry-run reference
+`fresh-slate` has unpushed commits on top of `fork`; no PR is open. `tmp/` (dry-run reference
 material in `tmp/dryrun/`) is untracked.
 
 | Piece | State |
 |---|---|
 | `apex` binary (`cmd/`, `internal/`) | done, tested, reviewed |
 | Five protocol skills (`skills/`) | done, reviewed, exercised end to end in scratch repos |
-| `pr-review` skill | workflow script passes a dry run against stub agents; never run on a real PR; not installed |
+| `pr-review` skill | workflow script passes a dry run against stub agents; never run on a real PR; installed |
 | `Apex` output style | installed; not yet selected or seen in the `/output-style` picker |
 | Named graphs (`apex graph --name`) | done, tested against real graphify, installed |
 | Cross-Agent communication rules | written; not yet exercised by live Agents |
-| Install | run on this Mac at `956c5f0`; `pr-review` (`63286fb`) needs another `make install` |
+| Install | run on this Mac at `b67622a`, `pr-review` included; live after a Claude Code restart |
 | LLMTraining migration | dry run on a snapshot passed; the live repo was never touched |
 
 ## Next
-Install `pr-review` (`make install`, restart Claude Code), then try `/pr-review <pr>` on a real PR: check the
+Try `/pr-review <pr>` on a real PR: check the
 `gh pr checkout --worktree` path, the inline-comment line mapping and the posted review format. It is the only piece
 never run for real.
 
