@@ -5,8 +5,8 @@ Design workspace for the fresh slate. The previous Apex lives in `example/` as a
 ## Fixed opinions
 
 - No planning step. The plan is a ledger item.
-- An Agent owns exactly one ledger and one handoff, and works the ledger one item at a time, executing each item
-  directly, through a subagent, or through Ultracode.
+- An Agent owns exactly one ledger and one handoff (one per ticket in per-ticket mode), and works the ledger one item
+  at a time, executing each item directly, through a subagent, or through Ultracode.
 - A handoff's startup procedure points at the Agent's live notes (which replace Claude memory) and at a graphify update.
 - Everything lives under `.claude/`. The protocol behaves identically whether a path is gitignored or tracked, and never
   mentions which. The one exception is `.claude/graphify/`, which `apex graph` gitignores on first run.
@@ -61,6 +61,8 @@ flowchart LR
   LIVE.md                      shared notes: facts true for every Agent in this repo
   ledger/<agent>/NNN.md        one item per file, never deleted
   ledger/<agent>/handoff.md    one file, overwritten
+  ledger/<agent>/per-ticket    optional marker: one ledger per ticket instead
+  ledger/<agent>/<ticket>/     a ticket's own NNN.md items and handoff.md
   graphify/<checkout>/         one graph per checkout, plus named graphs under graphs/<name>/
   git.md                       this repo's commit, push and PR conventions
 ```
@@ -72,6 +74,20 @@ live-reloads only `SKILL.md`, so the skill reads `LIVE.md` with a file read at s
 Agent reads it at start, after its own `LIVE.md`, and any Agent may edit it.
 
 `<repo>` is always the main checkout, even when the Agent works in a worktree.
+
+## Mono or per-ticket ledger
+
+Each Agent is in one of two modes, switched by the operator alone with an empty `per-ticket` file in its ledger
+directory.
+
+- **Mono** (no marker): one ledger and one handoff across every branch, worktree and ticket.
+- **Per-ticket** (marker): every `apex` verb works on `ledger/<agent>/<ticket>/`, a full ledger with its own ids from
+  001, its own in-progress item and its own `handoff.md`. `<ticket>` is the ticket id in the current checkout's branch,
+  upper-cased (`feat/eng-42-login` gives `ENG-42`), or the branch name with `/` as `-` when it names none. A detached
+  HEAD or a directory outside git falls back to the mono ledger. `apex list` prints `ledger: <dir>` first, so the Agent
+  reads the handoff from the binary's answer instead of deriving the ticket itself.
+
+A Dev Agent in per-ticket mode stays one Agent, working one ticket at a time, and switching branch switches its state.
 
 ## Ledger item
 

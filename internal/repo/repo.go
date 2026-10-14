@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 )
@@ -115,4 +116,23 @@ func LiveWorktrees(dir string) ([]string, error) {
 		}
 	}
 	return names, nil
+}
+
+// ponytail: any WORD-123 in the branch counts, so release-2 reads as a ticket; match git.md's ticket prefix if that bites.
+var ticketRe = regexp.MustCompile(`(?i)\b[a-z][a-z0-9]+-[0-9]+`)
+
+// Ticket names the ticket dir's checked-out branch works on: the ticket id in the branch, upper-cased (feat/eng-42-x
+// gives ENG-42), or else the branch itself with / as -. It is "" when HEAD is detached or dir is outside git.
+func Ticket(dir string) (string, error) {
+	branch, err := gitOut(dir, "branch", "--show-current")
+	if errors.Is(err, errNotRepo) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	if t := ticketRe.FindString(branch); t != "" {
+		return strings.ToUpper(t), nil
+	}
+	return strings.ReplaceAll(branch, "/", "-"), nil
 }

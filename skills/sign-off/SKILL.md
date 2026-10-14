@@ -25,7 +25,7 @@ file.
 
 ## 3. Handoff
 
-Overwrite `<repo>/.claude/ledger/<agent>/handoff.md` in the format `agent-protocol` defines. Take `checkout`,
+Overwrite `<ledger>/handoff.md` (see `agent-protocol`) in the format `agent-protocol` defines. Take `checkout`,
 `branch` and `head` from the checkout worked in at this moment. State names the item from step 1 and any uncommitted
 work outside `.claude/`.
 

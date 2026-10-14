@@ -178,3 +178,17 @@ func TestLiveWorktreesKeepsUnreadable(t *testing.T) {
 		t.Fatalf("LiveWorktrees = %v, %v; want [hidden]", got, err)
 	}
 }
+
+func TestTicketFromBranch(t *testing.T) {
+	r := newRepo(t)
+	for branch, want := range map[string]string{"feat/eng-42-login": "ENG-42", "ABC-7": "ABC-7", "fresh-slate": "fresh-slate", "user/spike": "user-spike"} {
+		git(t, r, "checkout", "-q", "-B", branch)
+		if got, err := Ticket(r); err != nil || got != want {
+			t.Errorf("Ticket on %s = %q, %v; want %q", branch, got, err, want)
+		}
+	}
+	git(t, r, "checkout", "-q", "--detach")
+	if got, err := Ticket(r); err != nil || got != "" {
+		t.Errorf("Ticket detached = %q, %v; want empty", got, err)
+	}
+}

@@ -211,3 +211,40 @@ func TestRetitleVerb(t *testing.T) {
 		t.Fatalf("retitle without title: exit %d, want 64", code)
 	}
 }
+
+// A per-ticket Agent keeps a separate ledger per branch, numbered from 001; without the marker it has one mono ledger.
+func TestPerTicketLedger(t *testing.T) {
+	root := setup(t)
+	git := func(args ...string) {
+		cmd := exec.Command("git", append([]string{"-c", "user.name=t", "-c", "user.email=t@t"}, args...)...)
+		cmd.Dir = root
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	git("init", "-q", "-b", "feat/eng-42-login")
+	git("commit", "-q", "--allow-empty", "-m", "init")
+	dev := filepath.Join(root, ".claude", "ledger", "dev")
+
+	_, out, _ := apex(t, root, "add", "task", "mono", "--agent", "dev")
+	if strings.TrimSpace(out) != filepath.Join(dev, "001.md") {
+		t.Fatalf("mono add printed %q", out)
+	}
+	if err := os.WriteFile(filepath.Join(dev, "per-ticket"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, out, _ = apex(t, root, "add", "task", "login", "--agent", "dev")
+	if strings.TrimSpace(out) != filepath.Join(dev, "ENG-42", "001.md") {
+		t.Fatalf("ticket add printed %q", out)
+	}
+	git("checkout", "-q", "-b", "spike")
+	_, out, _ = apex(t, root, "list", "--agent", "dev")
+	if want := "ledger: " + filepath.Join(dev, "spike") + "\n0 open, 0 in-progress, 0 closed\n"; out != want {
+		t.Fatalf("list on spike = %q, want %q", out, want)
+	}
+	git("checkout", "-q", "--detach")
+	_, out, _ = apex(t, root, "list", "--agent", "dev")
+	if !strings.Contains(out, "mono") || strings.Contains(out, "ledger:") {
+		t.Fatalf("detached list = %q, want the mono ledger", out)
+	}
+}
