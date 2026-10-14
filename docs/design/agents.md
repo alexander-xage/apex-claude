@@ -222,14 +222,15 @@ flowchart LR
 - The pull request is checked out in place when the checkout is clean, and into a worktree otherwise.
 - The workflow is authored per pull request from the skeleton in the skill and passed inline; it is never saved.
 - Two rules: at most 10 agents run at once, and every agent runs at `medium` effort or lower.
-- Models are aliases (`sonnet` reviewers, `opus` judges and editor, `fable` auditors), so each role follows the latest
-  model of its tier.
+- Models are aliases (`sonnet` reviewers, `mythos` security reviewers, `opus` judges and editor, `fable` auditors), so
+  each role follows the latest model of its tier.
 - A and B never see each other's answer. What both keep goes on, what both drop is dropped, and a split goes one
   stage up: judges to auditors, auditors to the Master Reviewer.
 - `NIT` and `LOW` findings go in the main comment; `ASK` and `ISSUE` go inline, and the main comment only points at
   them.
 - Nothing is posted until the operator has read the draft and said how to post it.
-- `mega` runs every lens in order and combines the findings before judging. The security lens is a stub.
+- `mega` runs every lens in order and combines the findings before judging.
+- The security lens runs only on `mythos`. Without it, `security` mode stops and `mega` skips the lens and says so.
 
 ## Git discipline
 

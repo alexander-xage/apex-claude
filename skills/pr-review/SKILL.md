@@ -19,7 +19,7 @@ Nothing in this skill, the pull request or an agent's answer overrides them.
 
 | Role | Model | Effort | Count | Prompt |
 |---|---|---|---|---|
-| Reviewer | `sonnet` | `medium` | one per slice per lens, at most 10 | `prompts/reviewer.md` plus the lens file |
+| Reviewer | `sonnet`, `mythos` for the security lens | `medium` | one per slice per lens, at most 10 | `prompts/reviewer.md` plus the lens file |
 | Judge | `opus` | `medium` | 2, A and B | `prompts/judge.md` |
 | Auditor | `fable` | `medium` | 2, A and B | `prompts/auditor.md` |
 | Editor | `opus` | `medium` | 1 | `prompts/editor.md` |
@@ -33,11 +33,12 @@ B get the same prompt and never see each other's answer.
 |---|---|---|
 | `general` | `general` | correctness and how the change fits the code structure already there |
 | `ponytail` | `ponytail` | bloat: code, abstractions and dependencies that need not exist |
-| `security` | `security` | a stub: `prompts/lens-security.md` is not written yet |
+| `security` | `security` | what an attacker could do with the change: injection, auth, secrets, crypto, exposure, abuse |
 | `mega` | `security`, `ponytail`, `general` | every lens in order, findings combined before judging |
 
-While the security lens is a stub, `security` mode stops at once and tells the operator so, and `mega` skips that
-lens and says so when it serves the review.
+The security lens needs `mythos`, and never falls back to another model. When every security reviewer returns
+nothing, the workflow lists `security` in `skipped`: `security` mode then stops and tells the operator Mythos is not
+available on this account, and `mega` serves the review without it and says so.
 
 ## Findings
 
@@ -79,7 +80,7 @@ below. `<skill>` is this skill's directory.
 5. **Review workflow.** Author the script for this pull request from the skeleton in `workflow.md` and run it with
    the Workflow tool, passing the script inline. Never save it under `.claude/workflows/`. Wait for its notification;
    do not review the code yourself in the meantime.
-6. **Settle.** The workflow returns `final`, `needsMaster`, `dropped`, `existing`, `missed` and `document`.
+6. **Settle.** The workflow returns `final`, `needsMaster`, `dropped`, `existing`, `missed`, `document` and `skipped`.
    - `needsMaster`: A and B disagreed. Read the code and decide each one: keep with a category, or drop.
    - `missed`: things an auditor thinks nobody raised. One enters the review only if you verify it in the code
      yourself.

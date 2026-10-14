@@ -55,7 +55,7 @@ assert.equal(calls.length, 24, '10 reviewers per lens for 2 lenses, 2 judges, 2 
 assert.ok(peak <= 10, `at most 10 agents at once, saw ${peak}`)
 for (const c of calls) {
   assert.equal(c.effort, 'medium', `${c.label} runs at medium effort`)
-  assert.ok(['sonnet', 'opus', 'fable'].includes(c.model), `${c.label} uses a model alias, got ${c.model}`)
+  assert.ok(['sonnet', 'mythos', 'opus', 'fable'].includes(c.model), `${c.label} uses a model alias, got ${c.model}`)
 }
 assert.deepEqual(ids(result.final), ['ponytail-1', 'ponytail-4'], 'kept by both judges and both auditors')
 assert.equal(result.final.find(f => f.id === 'ponytail-4').category, 'ASK', 'judges split on category: the milder one')
@@ -72,6 +72,19 @@ assert.deepEqual(ids(oneJudge.result.dropped), ['ponytail-3', 'ponytail-5'], 'on
 const oneAuditor = await run(scripts[0], args, label => (label === 'auditor:B' ? null : answers(label)))
 assert.deepEqual(ids(oneAuditor.result.final), [], 'nothing is final on one auditor alone')
 assert.equal(oneAuditor.result.needsMaster.length, 4)
+
+// The security lens runs only on mythos; where every security reviewer fails, the lens is skipped, never rerouted.
+const sec = await run(scripts[0], { ...args, lenses: ['security', 'ponytail'] }, answers)
+assert.ok(sec.calls.filter(c => c.label.startsWith('review:security:')).every(c => c.model === 'mythos'))
+assert.ok(sec.calls.filter(c => c.label.startsWith('review:ponytail:')).every(c => c.model === 'sonnet'))
+assert.deepEqual(sec.result.skipped, [])
+const noMythos = label => (label.startsWith('review:security:') ? null : answers(label))
+const megaNo = await run(scripts[0], { ...args, lenses: ['security', 'ponytail'] }, noMythos)
+assert.deepEqual(megaNo.result.skipped, ['security'], 'mega without mythos skips the security lens')
+assert.deepEqual(ids(megaNo.result.final), ['ponytail-1', 'ponytail-4'], 'and still reviews the other lenses')
+const secNo = await run(scripts[0], { ...args, lenses: ['security'] }, noMythos)
+assert.deepEqual(secNo.result.skipped, ['security'])
+assert.ok(!secNo.calls.some(c => c.label.startsWith('judge:')), 'security mode without mythos judges nothing')
 
 await assert.rejects(run(scripts[0], { ...args, slices: [...slices, slices[0]] }, answers), /merge them down to 10/)
 
