@@ -1,16 +1,16 @@
 ---
 checkout: /Users/alexanderstroev/Documents/GitHub/apex-claude
 branch: fresh-slate
-head: e8dd369ea2144aca0b090bd4c03a8b0caa39199a
+head: a948cae1c0ec7fed529fe13e769d28b599c4f817
 ---
 ## Startup
 invoke the Agent skill (reads both LIVE.md files); apex list --agent main
 
 ## State
 No item in progress. 004 closed: graphify removed as a dependency (verb, skill, repo helpers, install check, docs),
-committed in `e8dd369`; installed with `make install`. Not pushed: `fresh-slate` is 1 commit ahead of `fork`. Role card edit and
-this handoff are uncommitted. Adopted repos (ClaudeCodeBrowser, LLMTraining, saas-health-check, saic-tools,
-TamperMonkey) had graphify stripped from role cards, handoffs and LIVE.md, uncommitted there; graph caches deleted in
+committed in `e8dd369`, role card in `a948cae`; installed at `a948cae`. Not pushed: `fresh-slate` is ahead of `fork`. Adopted repos (ClaudeCodeBrowser, LLMTraining, saas-health-check, saic-tools,
+TamperMonkey) had graphify stripped from role cards, handoffs and LIVE.md, uncommitted there (operator may ask to
+commit); graph caches deleted in
 every repo. `tmp/` is untracked.
 
 ## Next
