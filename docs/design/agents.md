@@ -7,13 +7,13 @@ Design workspace for the fresh slate. The previous Apex lives in `example/` as a
 - No planning step. The plan is a ledger item.
 - An Agent owns exactly one ledger and one handoff (one per ticket in per-ticket mode), and works the ledger one item
   at a time, executing each item directly, through a subagent, or through Ultracode.
-- A handoff's startup procedure points at the Agent's live notes (which replace Claude memory) and at a graphify update.
+- A handoff's startup procedure points at the Agent's live notes (which replace Claude memory).
 - Everything lives under `.claude/`. The protocol behaves identically whether a path is gitignored or tracked, and never
-  mentions which. The one exception is `.claude/graphify/`, which `apex graph` gitignores on first run.
+  mentions which.
 - Binary-light: Go only where the answer must be deterministic.
-- Ponytail and graphify are required dependencies.
+- Ponytail is a required dependency.
 - The protocol skills install as user skills, not a plugin, so they keep bare names (`/apex-init`); `make install`
-  refuses to run without ponytail and graphify.
+  refuses to run without ponytail.
 - One output style, `Apex`, ships with the skills and governs replies only: answer first, terse, ledger items cited by
   id, a completion claim backed by the command that proved it. It is opt-in through `/output-style`.
 - Git is governed by a git-discipline skill with per-repo conventions; push and PR happen only on the operator's word.
@@ -63,7 +63,6 @@ flowchart LR
   ledger/<agent>/handoff.md    one file, overwritten
   ledger/<agent>/per-ticket    optional marker: one ledger per ticket instead
   ledger/<agent>/<ticket>/     a ticket's own NNN.md items and handoff.md
-  graphify/<checkout>/         one graph per checkout, plus named graphs under graphs/<name>/
   git.md                       this repo's commit, push and PR conventions
 ```
 
@@ -138,7 +137,7 @@ checkout: <absolute path of the checkout worked in>
 branch: <git rev-parse --abbrev-ref HEAD>
 head: <git rev-parse HEAD>
 ---
-## Startup     invoke the Agent skill (reads LIVE.md); apex graph update .; apex list --agent <agent>
+## Startup     invoke the Agent skill (reads LIVE.md); apex list --agent <agent>
 ## State       current item and where it stopped, uncommitted work
 ## Next
 ## Open threads
@@ -159,48 +158,6 @@ reconcile State against what changed.
 - Peer traffic stays out of the operator's chat: the Agent acknowledges in one line and never repeats to the operator
   what it sent to a peer, unless it needs the operator's answer.
 - `apex-init` writes these rules into the repo's `CLAUDE.md` section, so they hold before any skill loads.
-
-## Graphify discipline
-
-The protocol does not use the `/graphify` skill, which hardcodes `graphify-out/` at the repo root. The
-`graphify-discipline` skill states how Agents use the `graphify` CLI inside this protocol.
-
-**Location.** graphify reads the `GRAPHIFY_OUT` env var once at start and accepts an absolute path. Verified on
-graphify 0.9.72: with it set, `update` wrote `graph.json`, `GRAPH_REPORT.md`, `manifest.json` and `cache/` there, and
-`query` found the graph through the same variable.
-
-Agents never call `graphify` directly. `apex graph <args>` resolves the main checkout and the current checkout, sets
-`GRAPHIFY_OUT` to `<main>/.claude/graphify/<checkout>/`, and runs `graphify <args>` unchanged. `<checkout>` is `main`
-for the main checkout and the worktree's directory name otherwise, so Agents on different branches never overwrite
-each other's graph. A worktree directory named `main`, or two live worktrees sharing a name, is an error. A wrapper
-rather than an instructed env prefix, because one forgotten prefix writes `graphify-out/` into the repo root.
-
-A checkout can hold named graphs beside its default one. `apex graph --name <n> <args>` points `GRAPHIFY_OUT` at
-`<main>/.claude/graphify/<checkout>/graphs/<n>/`, and the path given to `update` scopes the graph to one area of the
-repo. The default graph stays whole, so edges between areas are never lost; a named graph only gives smaller answers
-inside its area. `.claude/LIVE.md` lists the named graphs, and they are pruned with their checkout.
-
-A worktree's graph lives exactly as long as the worktree does on disk. Every `apex graph` call compares `graphify/*/`
-against `git worktree list` and deletes each graph whose worktree directory no longer exists.
-`main` is never pruned.
-
-**When.** The session's Agent runs `apex graph update .` at startup and again before the first query after code
-changed. `update` re-extracts code only, with no LLM, in under a second on a mid-sized repo, so it always runs rather
-than checking for staleness. The Agent and its subagents orient with `query`, `explain`, `path` and `affected`;
-subagents and Ultracode workers only read. Concurrent writers are safe because graphify
-replaces files atomically and the rebuild is deterministic; the last writer wins.
-
-**Scope.** The graph describes code, not protocol state. `apex graph` adds `.claude` to the excludes graphify persists
-in the graph directory (`.graphify_build.json`, an internal graphify 0.9.x file), so ledger items, handoffs and notes
-never enter the graph and no file lands in the checkout. `apex graph extract --exclude X` replaces that list for its
-run, so an extract item passes `--exclude .claude` alongside its own excludes. Graphs are rebuilt, never committed:
-`apex graph` writes a `.gitignore` of `*` into `.claude/graphify/` when missing, so its own output hides itself.
-
-**Reading.** Every read passes `--budget`. A truncated answer means narrowing the question, not raising the budget
-blindly.
-
-**Never.** `hook install`, `claude install`, `watch`, `save-result`/`reflect` (graph memory overlaps `LIVE.md`), and
-`extract` (LLM semantic extraction) outside a ledger item created for it.
 
 ## PR review
 

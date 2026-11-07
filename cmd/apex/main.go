@@ -23,13 +23,11 @@ const usage = `usage: apex <verb> [args] --agent <name>
   close <id> <reason>                  -> closed
   reopen <id>                          in-progress|closed -> open
   retitle <id> <title>                 replace an item's title, any status
-  graph [--name n] <graphify args>     run graphify on this checkout's graph, or its named graph n (no --agent)
 
 an Agent whose ledger dir holds a file named per-ticket keeps one ledger per ticket: the ticket id in the current
 branch (ENG-42), else the branch name; detached or outside git, the mono ledger.
 
-exit: 0 ok, 1 not found, 2 environment, 3 illegal transition, 4 corrupt ledger, 64 usage;
-      graph exits with graphify's code, or 128+N when graphify dies by signal N
+exit: 0 ok, 1 not found, 2 environment, 3 illegal transition, 4 corrupt ledger, 64 usage
 `
 
 func main() {
@@ -50,9 +48,6 @@ func run(dir string, args []string, stdout, stderr io.Writer) int {
 	if verb == "-h" || verb == "--help" || verb == "help" {
 		fmt.Fprint(stdout, usage)
 		return 0
-	}
-	if verb == "graph" {
-		return graph(dir, args, stdout, stderr)
 	}
 	err := dispatch(dir, verb, args, stdout)
 	if errors.Is(err, flag.ErrHelp) {

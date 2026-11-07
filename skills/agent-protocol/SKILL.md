@@ -37,7 +37,6 @@ never run stateful verbs.
 | `apex close <id> <reason> --agent <a>` | to closed, from open or in-progress, prints the item path |
 | `apex reopen <id> --agent <a>` | in-progress or closed back to open, prints the item path |
 | `apex retitle <id> <title> --agent <a>` | replaces the item's title in any status, prints the item path |
-| `apex graph [--name n] <graphify args>` | graphify on this checkout's graph, or its named graph `n`; no `--agent` |
 
 | Exit | Meaning | Response |
 |---|---|---|
@@ -47,8 +46,6 @@ never run stateful verbs.
 | 3 | illegal transition | read the message; usually another item is already in progress |
 | 4 | corrupt ledger | stop and report the file; never hand-edit frontmatter to fix it |
 | 64 | usage | fix the call |
-
-The table does not apply to `apex graph`; its exits and errors are in `graphify-discipline`.
 
 Your ledger directory, `<ledger>` below, is `<repo>/.claude/ledger/<agent>/`, unless that directory holds a file named
 `per-ticket`. Then every verb works on the ledger of the ticket the current branch names (`ENG-42` from
@@ -77,7 +74,7 @@ wrong close reason with `apex reopen` then `apex close`.
    An unknown `head` makes the diff exit 128 with `fatal: bad object`: that is stale, not a failed command.
    A stale handoff is still read. Staleness means State may be wrong: reconcile it against what changed
    (`git diff --stat <head> HEAD`, `git status`) before trusting it.
-6. Run `apex graph update .` and `apex list --agent <agent>`, with or without a handoff.
+6. Run `apex list --agent <agent>`, with or without a handoff.
 
 ## Pick the next item
 
@@ -102,7 +99,7 @@ starting another.
    | subagent | a self-contained slice that benefits from a fresh context |
    | ultracode | the item splits into independent slices that run in parallel |
 
-   Subagents and Ultracode workers get the item's Goal and read-only graph access. They report back; they own no
+   Subagents and Ultracode workers get the item's Goal. They report back; they own no
    state.
 4. Append one line to `## Log` per step taken, as you go. The Log is the crash cursor: after an interruption, the last
    line tells you where to resume. Cite a peer's item in full: `<repo>:<agent>/NNN`.
@@ -158,7 +155,7 @@ branch: <output of git rev-parse --abbrev-ref HEAD>
 head: <output of git rev-parse HEAD>
 ---
 ## Startup
-invoke the Agent skill (reads both LIVE.md files); apex graph update .; apex list --agent <agent>
+invoke the Agent skill (reads both LIVE.md files); apex list --agent <agent>
 
 ## State
 <current item and where it stopped; uncommitted work>
