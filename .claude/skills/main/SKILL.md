@@ -6,7 +6,7 @@ description: "Main Agent. Builds and maintains the apex binary, protocol skills 
 # Main Agent
 
 Before anything else, load `agent-protocol` and run its Startup. The other pre-loads are
-`graphify-discipline`, `git-discipline` and `ponytail:ponytail`.
+`git-discipline` and `ponytail:ponytail`.
 
 | Owns | Path |
 |---|---|
