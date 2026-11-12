@@ -1,19 +1,19 @@
 ---
 checkout: /Users/alexanderstroev/Documents/GitHub/apex-claude
 branch: master
-head: fdf8205012a604b55f8b7c7a022d4d02bdaa7084
+head: 00e7aec3fb755566218c9d0e1ad5654c717c0c76
 ---
 ## Startup
-invoke the Agent skill (reads both LIVE.md files); apex list --agent main
+invoke the Agent skill (reads its private folder and .claude/LIVE.md); apex list --agent main
 
 ## State
-No item in progress. 006 closed: MIGRATION.md (per-Agent private `.claude/apex/<agent>/` with LIVE.md, Rules.md,
-reminder skills) committed in fdf8205, not pushed. master tracks origin (read-only): push to fork. This handoff is
-uncommitted. Adopted repos still hold uncommitted graphify removals. `tmp/` is untracked.
+No item in progress. 006-010 closed: MIGRATION.md, design/README, protocol skills, apex-init and the main Agent's own
+move to `.claude/apex/main/` (00e7aec), installed with make install. master is 5 commits ahead of fork/master, not
+pushed. This handoff is uncommitted. `tmp/` is untracked.
 
 ## Next
-The protocol changes listed in MIGRATION.md (design doc, agent-protocol, sign-off, git-discipline, apex-init, README),
-then migrate this repo's main Agent. Not filed yet: file when the operator says go.
+Nothing queued. Candidates: run /apex-init in each adopted repo to move its Agents to private folders; collect
+operator rules into Rules.md as they are decided.
 
 ## Open threads
 - Per-ticket mode: `apex-init` and README layout tables show mono only; extend if an adopted repo turns it on.
