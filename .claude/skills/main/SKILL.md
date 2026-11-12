@@ -12,7 +12,7 @@ Before anything else, load `agent-protocol` and run its Startup. The other pre-l
 |---|---|
 | Ledger | `.claude/ledger/main/`, through `apex <verb> --agent main` |
 | Handoff | `.claude/ledger/main/handoff.md` |
-| Live notes | `.claude/skills/main/LIVE.md` |
+| Notes, rules, reminders | `.claude/apex/main/` |
 
 Shared notes for every Agent in this repo: `.claude/LIVE.md`.
 
