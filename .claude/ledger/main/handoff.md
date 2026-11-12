@@ -1,15 +1,14 @@
 ---
 checkout: /Users/alexanderstroev/Documents/GitHub/apex-claude
 branch: master
-head: 00e7aec3fb755566218c9d0e1ad5654c717c0c76
+head: 2d0aa7b0da2c347856bfc772d5bd406d56f21374
 ---
 ## Startup
 invoke the Agent skill (reads its private folder and .claude/LIVE.md); apex list --agent main
 
 ## State
-No item in progress. 006-010 closed: MIGRATION.md, design/README, protocol skills, apex-init and the main Agent's own
-move to `.claude/apex/main/` (00e7aec), installed with make install. master is 5 commits ahead of fork/master, not
-pushed. This handoff is uncommitted. `tmp/` is untracked.
+No item in progress. 011 (from link-agent) closed: Rules.md renamed to RULES.md, commit 2d0aa7b, installed, not pushed.
+Earlier work pushed to fork at 4d8bdd8. This handoff is uncommitted. `tmp/` is untracked.
 
 ## Next
 Nothing queued. Candidates: run /apex-init in each adopted repo to move its Agents to private folders; collect
