@@ -8,5 +8,4 @@ Facts every Agent in this repo needs, kept once. Every Agent reads this after it
 - Install: `make install` builds `~/.local/bin/apex` and copies the skills (marked `.apex-installed`) and the `Apex`
   output style into `~/.claude/`; restart Claude Code after. `make uninstall` removes only what it marked.
 - A skill changed under `skills/` is not live until `make install` runs again.
-- Merging `fresh-slate` to `master` is breaking (removes the v0.3.0 plugin): mark that PR or merge `feat!`.
 - Never search git-ignored files in adopted repos (LLMTraining `runs/` is 5.4 GB; a walk there tripped memguard).

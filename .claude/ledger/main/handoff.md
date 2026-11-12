@@ -1,20 +1,20 @@
 ---
 checkout: /Users/alexanderstroev/Documents/GitHub/apex-claude
-branch: fresh-slate
-head: 45068ad4c2d26829e7d08384d2937ed9662d74b5
+branch: master
+head: 5cdd2905052e0139c5208bdaa4f9f8f68377e40a
 ---
 ## Startup
 invoke the Agent skill (reads both LIVE.md files); apex list --agent main
 
 ## State
-No item in progress. 005 closed: origin/master's Windows installer (50cc181) merged into fresh-slate with graphify
-stripped, commit 45068ad. fork/fresh-slate and fork/master are in sync (master = origin/master). This handoff is
-uncommitted. Adopted repos still hold uncommitted graphify removals. `tmp/` is untracked.
+No item in progress. fresh-slate merged into master as 5cdd290 (feat!: graphify removal is the breaking part) and
+pushed to fork; fresh-slate deleted locally and on fork. master tracks origin (read-only): push to fork. LIVE.md and
+this handoff are uncommitted. Adopted repos still hold uncommitted graphify removals. `tmp/` is untracked.
 
 ## Next
-Nothing queued. Release left: open the `feat!` PR for `fresh-slate` when the operator asks, merge, tag.
+Nothing queued. Release left: tag the merge when the operator asks; getting master into origin (FNGApex) needs a PR
+from fork, only on request.
 
 ## Open threads
 - Per-ticket mode: `apex-init` and README layout tables show mono only; extend if an adopted repo turns it on.
-- PR for `fresh-slate`: open only when the operator says so; breaking merge, see `.claude/LIVE.md`.
 - PowerShell installer edits are untested here (no pwsh); verify on Windows.
