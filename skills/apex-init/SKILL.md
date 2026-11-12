@@ -29,7 +29,8 @@ Collect these facts before routing. Read only; change nothing yet.
 
 | Fact | How |
 |---|---|
-| Apex Agents | each `<repo>/.claude/skills/<a>/` holding both `SKILL.md` and `LIVE.md`, whose `SKILL.md` loads `agent-protocol` |
+| Apex Agents | each `<repo>/.claude/skills/<a>/SKILL.md` that loads `agent-protocol` |
+| Unmigrated notes | an Apex Agent with a `<repo>/.claude/skills/<a>/LIVE.md`, or without `<repo>/.claude/apex/<a>/.gitignore` |
 | Foreign ledgers | directories of numbered item files kept outside `.claude/ledger/`, such as `DevLedger/` with `INDEX.md` and `NNN-slug.md` |
 | Foreign handoffs | handoffs of an Agent defined in this repo kept outside `.claude/ledger/<a>/handoff.md`, such as `docs/handoff/*.md`. Notes files do not count |
 | Foreign role cards | `.claude/skills/<x>/SKILL.md` that describe an agent role but are not Apex Agents, such as `.claude/skills/dev-agent/` |
@@ -44,7 +45,7 @@ Collect these facts before routing. Read only; change nothing yet.
 | No Apex Agents, and no foreign role cards, ledgers, handoffs or project memory files | 3. Blank slate |
 | Any foreign role card, ledger or handoff | 4. Migrate |
 | Project memory files and no Apex Agents | 4. Migrate |
-| Apex Agents present, no foreign layout, and only the `CLAUDE.md`, shared-files or auto-memory signal in 5 fails | 6. Shared setup, then 7 |
+| Apex Agents present, no foreign layout, and only unmigrated notes or the `CLAUDE.md`, shared-files or auto-memory signal in 5 fail | 8. Private folders for Agents with unmigrated notes, 6. Shared setup for its failed signals, then 7 |
 | Apex Agents present and every signal in 5 holds | 5. Conformant |
 
 When the route is unclear, show the operator the facts from step 1 and ask.
@@ -59,7 +60,8 @@ modified hold the operator's own edits, and section 7 needs the list.
    text only if the operator offers it.
 2. Per Agent:
    - write `<repo>/.claude/skills/<agent>/SKILL.md` from `templates/agent-SKILL.md`;
-   - write `<repo>/.claude/skills/<agent>/LIVE.md` from `templates/LIVE.md`.
+   - create the private folder: `mkdir -p <repo>/.claude/apex/<agent>/skills && printf '*\n' > <repo>/.claude/apex/<agent>/.gitignore`;
+   - write `<repo>/.claude/apex/<agent>/LIVE.md` from `templates/LIVE.md`.
 3. Do the shared setup in 6.
 4. Check with `apex list --status all --agent <agent>` per Agent: exit 0, no items.
 5. Commit as in 7.
@@ -90,7 +92,7 @@ Show the operator one plan and wait for approval.
 | Status conflicts | every item whose file status differs from its `INDEX.md` row or from its old handoff; the item file wins, the operator confirms, and a handoff's differing claim goes into the new handoff's State as "check before resuming" |
 | In progress | at most one item per Agent; the operator picks it when several old items are running |
 | Handoffs | old path to `.claude/ledger/<agent>/handoff.md`, or dropped, and why |
-| Memory | per rule: the Agent `LIVE.md` it goes to, `.claude/LIVE.md`, or dropped |
+| Memory | per rule, by the sort table in 8: the Agent's `LIVE.md`, `Rules.md` or a reminder skill, `.claude/LIVE.md`, or dropped |
 | References | in-repo files citing old items or paths (to rewrite), and references in other repos (listed only) |
 | Left alone | other-home files and anything else that stays, and why |
 | To delete after confirmation | every old file the migration replaces |
@@ -115,14 +117,14 @@ old handoff and `git log`, and offer to close the finished ones in the same prom
 docs, is `<repo>:<agent>/NNN`, where `<repo>` is the home repo's directory name, such as `xage-guard:xage/018`. Old
 shapes citing an Agent not migrated here, such as `XageLedger 018`, stay as they are. A bare number may cite another
 Agent's ledger, such as a research item's `035 rebuild` meaning a dev item: resolve each occurrence from its context,
-and list the uncertain ones in the plan. A `memory <name>` mention becomes a reference to the `LIVE.md` that took that
+and list the uncertain ones in the plan. A `memory <name>` mention becomes a reference to the notes file that took that
 rule. Where old text already pairs a shape with its path, such as `M011 (Master-Tasks/M011-x.md)`, write the new
 reference once, not twice.
 
 **Handoffs.** Of several dated handoffs for one Agent, the newest is carried and the superseded ones are dropped, not
 merged. README and index files are dropped. A notes file becomes `LIVE.md` facts or stays where it is; ask which.
 
-**Memory.** One `LIVE.md` entry per rule, not per file. Keep facts; drop procedure (protocol and session steps) and
+**Memory.** One notes entry per rule, not per file. Keep facts; drop procedure (protocol and session steps) and
 stale state (what was running or last committed). A fact several Agents need goes to `.claude/LIVE.md`, once. Index
 files such as `MEMORY.md` are dropped.
 
@@ -153,8 +155,8 @@ migration. Then, in this order, because `apex` needs the Agent's `SKILL.md` to e
 1. **Role cards.** Write `.claude/skills/<agent>/SKILL.md` from `templates/agent-SKILL.md`. Put the old card's role
    content under `## Role`: ownership, peers, working method, voice. Drop what the protocol now supplies: session-start
    steps, ledger and handoff procedure, pointers to memory or an index.
-2. **LIVE.md.** Write each Agent's from `templates/LIVE.md` and `.claude/LIVE.md` from `templates/shared-LIVE.md` if
-   missing, then fold in the planned memory entries.
+2. **Notes.** Create each Agent's private folder and `LIVE.md` as in 3 step 2, and `.claude/LIVE.md` from
+   `templates/shared-LIVE.md` if missing, then fold in the planned memory entries.
 3. **Items.** Per Agent, in id map order:
    1. `apex add <kind> "<title>" --agent <agent>`; it prints the new path. Stop and ask if its id differs from the map.
    2. Write the body below the frontmatter; never touch the frontmatter. Rewrite references by the id map.
@@ -176,7 +178,7 @@ migration. Then, in this order, because `apex` needs the Agent's `SKILL.md` to e
    is filled after the commit, in 7. Carry State, Next and Open threads from the carried handoff, plus the waiting
    parts from the status table; rewrite references by the id map. Procedure text
    that belongs to the role card is dropped.
-5. **References.** Rewrite every in-repo reference the plan lists: comments, docs, both `LIVE.md` levels. Rewrite
+5. **References.** Rewrite every in-repo reference the plan lists: comments, docs, every notes file. Rewrite
    each file in one pass from the map; chained replacements turn old `014 -> 013` into `012`. A string literal that
    reaches program output is not rewritten; list it for the operator.
 6. **Shared setup** in 6.
@@ -206,6 +208,7 @@ as a failed signal.
 | No foreign layout remains | step 1 found no foreign ledgers, handoffs or role cards |
 | `CLAUDE.md` frames sessions | `<repo>/CLAUDE.md` contains the `## Apex Agents` heading |
 | Shared files exist | `<repo>/.claude/git.md` and `<repo>/.claude/LIVE.md` exist |
+| Notes are private | every Apex Agent has `<repo>/.claude/apex/<a>/.gitignore` and no `<repo>/.claude/skills/<a>/LIVE.md` |
 | Auto-memory is off | `<repo>/.claude/settings.json` has `"autoMemoryEnabled": false` |
 
 ## 6. Shared setup
@@ -240,3 +243,28 @@ edits: leave it out, or name it to the operator and stage it only on their yes.
 After a migration, write each migrated handoff's `checkout`, `branch` and `head` from the main checkout, whether or
 not the operator approved the commit, so the next session's freshness check has values to run on. The
 handoffs written here ride in a later commit, per `git-discipline`.
+
+## 8. Private folders
+
+Moves an Apex Agent's notes from a tracked `.claude/skills/<a>/LIVE.md` into `<repo>/.claude/apex/<a>/`, which ignores
+itself. The role card, ledger, handoff and `.claude/LIVE.md` stay where they are.
+
+1. `mkdir -p <repo>/.claude/apex/<a>/skills && printf '*\n' > <repo>/.claude/apex/<a>/.gitignore`.
+2. Sort every entry of the old `LIVE.md`:
+
+   | Entry | Goes to |
+   |---|---|
+   | an operator decision that grants something | `Rules.md`, as `- Allowed: <action, target, condition>` |
+   | an operator decision phrased as a ban | `Rules.md` as the grant it implies, plus a `Don't:` in a reminder skill if the ban guards a real risk |
+   | a trap, a convention, a do or don't, a how-to | `skills/<topic>.md`, lines `Do:`, `Don't:`, `Trap:`, `Good to know:` |
+   | a fact about the current state | `LIVE.md` |
+   | stale, or already in the ledger or `.claude/LIVE.md` | dropped |
+
+   Rules carry no dates or history. Show the operator the sorted files and wait for approval: only the operator decides
+   rules.
+3. `git -C <repo> rm -q .claude/skills/<a>/LIVE.md`, or `rm` it when untracked.
+4. In the role card, replace the `Live notes` row with `| Notes, rules, reminders | .claude/apex/<a>/ |`. The role
+   card is the operator's file: this row only, with the operator's approval.
+5. Check: `git -C <repo> check-ignore -q .claude/apex/<a>/LIVE.md` exits 0, `git -C <repo> status --porcelain --
+   .claude/apex` prints nothing, and every `- ` line of `Rules.md` starts with `- Allowed: `.
+

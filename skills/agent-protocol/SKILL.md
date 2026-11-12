@@ -62,8 +62,8 @@ wrong close reason with `apex reopen` then `apex close`.
 ## Startup
 
 1. Read `<repo>/.claude/apex/<agent>/LIVE.md`, `Rules.md` and every `skills/*.md` there with file reads. A missing
-   file is empty; a tracked `<repo>/.claude/skills/<agent>/LIVE.md` means the Agent is not migrated: follow
-   `MIGRATION.md` in the apex repo, or tell the operator.
+   file is empty; a tracked `<repo>/.claude/skills/<agent>/LIVE.md` means the Agent is not migrated: tell the operator
+   to run `/apex-init`, which moves it.
 2. Read `<repo>/.claude/LIVE.md` with a file read, if it exists.
 3. Load every skill your role card lists.
 4. Run `apex list --agent <agent>` to find `<ledger>`, then read `<ledger>/handoff.md`. If it does not exist, skip to
