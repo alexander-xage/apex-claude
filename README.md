@@ -17,8 +17,17 @@ make install      # apex -> ~/.local/bin; skills and the Apex output style -> ${
 make uninstall    # removes all three
 ```
 
+On Windows, without `make` (PowerShell 5.1 or 7+; `PREFIX` defaults to `%USERPROFILE%\.local\bin`):
+
+```powershell
+pwsh scripts/install.ps1      # -Prefix <dir> -ConfigDir <dir> to override
+pwsh scripts/uninstall.ps1
+```
+
 `make install` stops if ponytail is missing, or if a skill folder or `output-styles/apex.md` of the same
-name exists that it did not install; it never overwrites or removes a file of yours. `PREFIX` must be on the `PATH` of the shell Claude Code
+name exists that it did not install; it never overwrites or removes a file of yours. It also stops if a legacy
+Apex v0.3 binary (`~/.claude/bin/apex`) is present, since it would shadow the new `apex` on `PATH`; remove the old
+install first with `example/scripts/uninstall.sh` (or `example/scripts/uninstall.ps1`). `PREFIX` must be on the `PATH` of the shell Claude Code
 runs Bash in; every skill calls a bare `apex`. The skills install as user skills, not as a plugin, so they keep bare
 names (`/apex-init`, `/sign-off`); plugin skills are always prefixed with the plugin name. Restart Claude Code after
 installing. The output style is optional: pick it with `/output-style Apex`.

@@ -29,6 +29,7 @@ uninstall:
 check:
 	@grep -q '"ponytail@ponytail"' "$(CLAUDE_DIR)/plugins/installed_plugins.json" 2>/dev/null || \
 	  { echo "ponytail plugin is not installed: /plugin marketplace add DietrichGebert/ponytail, then /plugin install ponytail@ponytail" >&2; exit 1; }
+	@if [ -e "$(CLAUDE_DIR)/bin/apex" ]; then echo "$(CLAUDE_DIR)/bin/apex is a legacy Apex v0.3 install and shadows the new apex on PATH; remove it first: example/scripts/uninstall.sh" >&2; exit 1; fi
 	@for s in $(SKILLS); do d="$(CLAUDE_DIR)/skills/$$s"; \
 	  if [ -e "$$d" ] && [ ! -f "$$d/$(MARK)" ]; then echo "$$d exists and was not installed by apex; move it first" >&2; exit 1; fi; done
 	@if [ -e "$(STYLE)" ] && ! grep -q '$(STYLE_MARK)' "$(STYLE)"; then echo "$(STYLE) exists and was not installed by apex; move it first" >&2; exit 1; fi
