@@ -39,7 +39,10 @@ Then adopt the protocol in a repo with one session that runs `/apex-init`.
 ```text
 <repo>/.claude/
   skills/<agent>/SKILL.md      role card, user-owned; lists the skills to pre-load
-  skills/<agent>/LIVE.md       live notes, agent-owned; replaces memory
+  apex/<agent>/                private to this checkout: its .gitignore holds *
+    LIVE.md                    live notes, agent-owned; replaces memory
+    Rules.md                   what the operator allows, one `Allowed:` line each
+    skills/<topic>.md          reminders: traps, good-to-knows, do's and don'ts
   LIVE.md                      shared notes: facts every Agent in the repo needs
   ledger/<agent>/NNN.md        one item per file, never deleted
   ledger/<agent>/handoff.md    one file, overwritten

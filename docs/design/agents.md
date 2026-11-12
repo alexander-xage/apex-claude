@@ -8,8 +8,8 @@ Design workspace for the fresh slate. The previous Apex lives in `example/` as a
 - An Agent owns exactly one ledger and one handoff (one per ticket in per-ticket mode), and works the ledger one item
   at a time, executing each item directly, through a subagent, or through Ultracode.
 - A handoff's startup procedure points at the Agent's live notes (which replace Claude memory).
-- Everything lives under `.claude/`. The protocol behaves identically whether a path is gitignored or tracked, and never
-  mentions which.
+- Everything lives under `.claude/`. The role card, ledger, handoff and shared notes are tracked; each Agent's
+  `.claude/apex/<agent>/` ignores itself and stays private to the main checkout.
 - Binary-light: Go only where the answer must be deterministic.
 - Ponytail is a required dependency.
 - The protocol skills install as user skills, not a plugin, so they keep bare names (`/apex-init`); `make install`
@@ -57,7 +57,10 @@ flowchart LR
 ```
 <repo>/.claude/
   skills/<agent>/SKILL.md      role card, user-owned; body lists the skills to pre-load
-  skills/<agent>/LIVE.md       live notes, agent-owned; replaces memory
+  apex/<agent>/.gitignore      one line, *: the folder ignores itself
+  apex/<agent>/LIVE.md         live notes, agent-owned; replaces memory
+  apex/<agent>/Rules.md        what the operator allows
+  apex/<agent>/skills/*.md     reminder skills, agent-owned
   LIVE.md                      shared notes: facts true for every Agent in this repo
   ledger/<agent>/NNN.md        one item per file, never deleted
   ledger/<agent>/handoff.md    one file, overwritten
@@ -66,8 +69,21 @@ flowchart LR
   git.md                       this repo's commit, push and PR conventions
 ```
 
-`SKILL.md` and `LIVE.md` are separate files so the Agent can keep notes without rewriting its own role. Claude Code
-live-reloads only `SKILL.md`, so the skill reads `LIVE.md` with a file read at start rather than embedding it.
+`SKILL.md` and the private folder are separate so the Agent can keep notes without rewriting its own role. Claude Code
+live-reloads only `SKILL.md`, so the Agent reads the private folder with file reads at start rather than embedding it.
+The folder lives only in the main checkout; a worktree reads it through `<repo>`.
+
+| File | Holds | Written by |
+|---|---|---|
+| `LIVE.md` | facts about the current state that outlive one item | the Agent |
+| `Rules.md` | what the operator has decided the Agent may do | the Agent, only from the operator's words |
+| `skills/<topic>.md` | reminders on how to do the work: traps, good-to-knows, do's and don'ts, one topic per file | the Agent |
+
+A rule starts with `Allowed:` and grants one specific action: what, on what, when. It carries no date and no history,
+and holds no prohibition or trap; those go in a reminder skill. What no rule allows needs the operator's approval.
+
+A reminder skill is not an Agent and never overrides the role card or the protocol. It is plain markdown read with a
+file read, never discovered or invoked by Claude Code.
 
 `.claude/LIVE.md` holds facts every Agent in the repo needs, kept once instead of copied into each Agent's notes. Every
 Agent reads it at start, after its own `LIVE.md`, and any Agent may edit it.
@@ -119,10 +135,10 @@ day of the correction.
 
 ## Session flow
 
-1. The user invokes `/<agent>`. The Agent reads `LIVE.md`, its pre-loads and `handoff.md`, then runs the handoff's
+1. The user invokes `/<agent>`. The Agent reads its private folder, its pre-loads and `handoff.md`, then runs the handoff's
    Startup steps.
 2. Per item: `apex start`, execute (direct, subagent or Ultracode) logging each step, review plus
-   `/ponytail:ponytail-review`, update `LIVE.md`, `apex close`, rewrite `handoff.md`.
+   `/ponytail:ponytail-review`, update the private folder, `apex close`, rewrite `handoff.md`.
 
 Every stateful `apex` verb takes an explicit `--agent`. There is no default Agent.
 
@@ -137,7 +153,7 @@ checkout: <absolute path of the checkout worked in>
 branch: <git rev-parse --abbrev-ref HEAD>
 head: <git rev-parse HEAD>
 ---
-## Startup     invoke the Agent skill (reads LIVE.md); apex list --agent <agent>
+## Startup     invoke the Agent skill (reads its private folder and .claude/LIVE.md); apex list --agent <agent>
 ## State       current item and where it stopped, uncommitted work
 ## Next
 ## Open threads
@@ -223,11 +239,11 @@ The `apex-init` skill adds a short section to the repo's `CLAUDE.md` that frames
 - **Sign off:** a notice the operator gives to end a session, handled by the `sign-off` skill. The skill runs from
   `/sign-off` or when the operator says "sign off". The Agent then:
   1. logs where the in-progress item stopped, or closes it;
-  2. updates `LIVE.md`;
+  2. updates the private folder and `.claude/LIVE.md`;
   3. writes the handoff;
   4. cleans up what the session started: scratch files, servers, merged worktrees;
-  5. commits the session's `.claude/` changes per git-discipline, in the main checkout on whatever branch it has checked
-     out, staging only the `.claude/` paths the session changed;
+  5. commits the session's tracked `.claude/` changes per git-discipline, in the main checkout on whatever branch it
+     has checked out, staging only the `.claude/` paths the session changed;
   6. reports unpushed commits. This is the only point where pushing comes up.
 
 ## Auto-memory
@@ -252,6 +268,9 @@ The binary has no init or migrate verb. The skill moves files and rewrites them,
 Migration renumbers each Agent's items from 001 in old order and rewrites every reference to an old number inside the
 repo: item bodies, handoffs, both `LIVE.md` levels, code and docs. References in other repos cannot be rewritten from
 here; the skill lists them for the operator. Facts several Agents share go to `.claude/LIVE.md`, once.
+
+An Agent whose `LIVE.md` still sits tracked in `.claude/skills/<agent>/` moves to its private folder by
+[MIGRATION.md](../../MIGRATION.md).
 
 LLMTraining is the first migration target. Its foreign layout: `DevLedger/` and `ResearchLedger/` at the repo root with
 a hand-kept `INDEX.md`, handoffs in `docs/handoff/`, role cards in `.claude/skills/`, and project facts in memory.
