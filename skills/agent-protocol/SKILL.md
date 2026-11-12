@@ -1,6 +1,6 @@
 ---
 name: agent-protocol
-description: The shared protocol every Apex Agent follows. Covers session startup from the handoff, working the ledger one item at a time through the apex binary, the handoff format and freshness check, LIVE.md upkeep, and collaboration with peer Agents. Pre-loaded by an Agent's role card; use whenever an Agent starts a session, picks, works or closes a ledger item, or writes its handoff.
+description: The shared protocol every Apex Agent follows. Covers session startup from the handoff, working the ledger one item at a time through the apex binary, the handoff format and freshness check, upkeep of the Agent's private notes, rules and reminder skills, and collaboration with peer Agents. Pre-loaded by an Agent's role card; use whenever an Agent starts a session, picks, works or closes a ledger item, or writes its handoff.
 ---
 
 # Agent protocol
@@ -11,7 +11,10 @@ is your role card's directory name.
 ```
 <repo>/.claude/
   skills/<agent>/SKILL.md      role card, user-owned; never edit it
-  skills/<agent>/LIVE.md       your live notes; you own and rewrite them
+  apex/<agent>/                your private folder; its .gitignore holds *, so nothing in it is tracked
+    LIVE.md                    your live notes; you own and rewrite them
+    Rules.md                   what the operator allows you; written only from the operator's words
+    skills/<topic>.md          your reminder skills: traps, good-to-knows, do's and don'ts
   LIVE.md                      shared notes for every Agent in this repo; any Agent edits them
   ledger/<agent>/NNN.md        one item per file, never deleted
   ledger/<agent>/handoff.md    your handoff, overwritten each time
@@ -58,7 +61,9 @@ wrong close reason with `apex reopen` then `apex close`.
 
 ## Startup
 
-1. Read `<repo>/.claude/skills/<agent>/LIVE.md` with a file read.
+1. Read `<repo>/.claude/apex/<agent>/LIVE.md`, `Rules.md` and every `skills/*.md` there with file reads. A missing
+   file is empty; a tracked `<repo>/.claude/skills/<agent>/LIVE.md` means the Agent is not migrated: follow
+   `MIGRATION.md` in the apex repo, or tell the operator.
 2. Read `<repo>/.claude/LIVE.md` with a file read, if it exists.
 3. Load every skill your role card lists.
 4. Run `apex list --agent <agent>` to find `<ledger>`, then read `<ledger>/handoff.md`. If it does not exist, skip to
@@ -105,8 +110,8 @@ starting another.
    line tells you where to resume. Cite a peer's item in full: `<repo>:<agent>/NNN`.
 5. Review the result against the Goal's done-criteria, run `/ponytail:ponytail-review` on the result, and act on its
    findings. If that skill is unavailable, review against the ponytail ladder yourself and say so in the Log.
-6. Update your `LIVE.md` or `<repo>/.claude/LIVE.md` when you learned something durable: a repo fact, a convention, a
-   trap. Skip it when nothing durable came up.
+6. Update your notes when you learned something durable: a state fact to `LIVE.md`, a trap or a do or don't to a
+   reminder skill, a fact every Agent needs to `<repo>/.claude/LIVE.md`. Skip it when nothing durable came up.
 7. Write `## Outcome`.
 8. `apex close <id> "done: <one line>" --agent <agent>`.
 9. Run the commit check in `git-discipline`, silently. When it passes, commit the item's work: the code plus the
@@ -155,7 +160,7 @@ branch: <output of git rev-parse --abbrev-ref HEAD>
 head: <output of git rev-parse HEAD>
 ---
 ## Startup
-invoke the Agent skill (reads both LIVE.md files); apex list --agent <agent>
+invoke the Agent skill (reads its private folder and .claude/LIVE.md); apex list --agent <agent>
 
 ## State
 <current item and where it stopped; uncommitted work>
@@ -169,17 +174,26 @@ invoke the Agent skill (reads both LIVE.md files); apex list --agent <agent>
 
 The Startup line is literal apart from `<agent>`.
 
-## LIVE.md
+## Notes
 
-`LIVE.md` replaces memory. Keep it current and short: rewrite or delete stale entries instead of appending
-contradictions. It holds facts that outlive one item. Per-item progress belongs in the item's Log.
+Your notes replace memory. Keep them current and short: rewrite or delete stale entries instead of appending
+contradictions. They hold what outlives one item; per-item progress belongs in the item's Log.
 
 | File | Holds | Who edits |
 |---|---|---|
 | `<repo>/.claude/LIVE.md` | facts every Agent in this repo needs: build steps, repo conventions, shared traps | any Agent |
-| `<repo>/.claude/skills/<agent>/LIVE.md` | facts only your role needs | you |
+| `<repo>/.claude/apex/<agent>/LIVE.md` | facts about the current state that only your role needs | you |
+| `<repo>/.claude/apex/<agent>/Rules.md` | what the operator has decided you may do | you, only from the operator's words |
+| `<repo>/.claude/apex/<agent>/skills/<topic>.md` | reminders on how to do your work: traps, good-to-knows, do's and don'ts | you |
 
 A fact goes in one file, never both. Move it to `<repo>/.claude/LIVE.md` once a second Agent needs it.
+
+**Rules.** Each line starts with `Allowed:` and grants one specific action: what, on what, when. No date, no
+history, no prohibition, no trap; a "don't" goes in a reminder skill. Add, change or delete a rule only when the
+operator decides it. What no rule allows needs the operator's approval.
+
+**Reminder skills.** One topic per file, lines starting `Do:`, `Don't:`, `Trap:` or `Good to know:`. A reminder never
+overrides your role card or this protocol. It is a plain file you read, not a Claude Code skill.
 
 ## Collaboration
 

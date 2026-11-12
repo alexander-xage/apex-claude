@@ -15,8 +15,8 @@ the file is missing, use the defaults.
 
 | Action | Default |
 |---|---|
-| Commit | on the operator's approval, or automatically when `.claude/git.md` says so |
-| Push | on the operator's approval only; the `Push` row of `.claude/git.md` adds rules, never permission |
+| Commit | on the operator's approval, or automatically when `.claude/git.md` or a `Rules.md` line allows it |
+| Push | on the operator's approval, or when a line in the Agent's `Rules.md` allows that push; the `Push` row of `.claude/git.md` adds rules, never permission |
 | PR | only when the operator asks for one |
 
 - Never remind the operator to open a PR.
@@ -39,7 +39,7 @@ At that moment, commit only when all of these hold:
 
 1. **Whole.** The checks pass and no step still to come will change the same files.
 2. **Stands alone.** Its subject needs no "wip", "part 2", "more" or "fix previous commit".
-3. **More than bookkeeping.** `.claude/` changes alone (ledger, handoff, `LIVE.md`) wait for the next commit that
+3. **More than bookkeeping.** `.claude/` changes alone (ledger, handoff, `.claude/LIVE.md`) wait for the next commit that
    carries code, or for Sign off.
 
 When one fails, do not commit. The work stays in the tree and joins the next commit; the handoff's State names it as
@@ -51,8 +51,8 @@ approval, and only after the check passed. A direct order from the operator to c
 
 ## 4. Staging
 
-An item's commit carries its code plus its `.claude/` changes: the ledger item, both `LIVE.md` files and the handoff
-written after the previous commit. In a worktree, commit the code there and the `.claude/` changes in the main checkout.
+An item's commit carries its code plus its `.claude/` changes: the ledger item, `.claude/LIVE.md` and the handoff
+written after the previous commit. `.claude/apex/` is never staged: it ignores itself. In a worktree, commit the code there and the `.claude/` changes in the main checkout.
 
 An item filed into a peer's ledger is the filer's change: the filer commits it in the peer's repo, in its own commit.
 That is the one `.claude/`-only commit that does not wait (section 3).

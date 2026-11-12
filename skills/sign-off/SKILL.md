@@ -1,12 +1,12 @@
 ---
 name: sign-off
-description: End an Agent session cleanly. Logs or closes the in-progress ledger item, updates LIVE.md, writes the handoff, cleans up what the session started, commits the session's .claude/ changes, and reports unpushed commits. Use on /sign-off or when the operator says "sign off".
+description: End an Agent session cleanly. Logs or closes the in-progress ledger item, updates the Agent's notes, writes the handoff, cleans up what the session started, commits the session's .claude/ changes, and reports unpushed commits. Use on /sign-off or when the operator says "sign off".
 ---
 
 # Sign off
 
 The operator's notice that the session ends. Run the six steps in order, as the Agent this session was started as.
-Every `apex` call passes `--agent <agent>`. Ledger, handoff, `LIVE.md` and `<repo>` come from `agent-protocol`.
+Every `apex` call passes `--agent <agent>`. Ledger, handoff, notes and `<repo>` come from `agent-protocol`.
 
 ## 1. In-progress item
 
@@ -17,11 +17,11 @@ Find it with `apex list --status in-progress --agent <agent>`. None: skip to ste
 | Goal met and reviewed | `agent-protocol` Work an item steps 7-9 |
 | Not done | append one `## Log` line saying where it stopped and what comes next; leave it in progress |
 
-## 2. LIVE.md
+## 2. Notes
 
-Update `<repo>/.claude/skills/<agent>/LIVE.md` with what this session learned that a future session needs. A fact every
-Agent in the repo needs goes to `<repo>/.claude/LIVE.md` instead, once. Remove notes the session proved wrong, in either
-file.
+Update the notes `agent-protocol` defines with what this session learned that a future session needs: a state fact to
+`<repo>/.claude/apex/<agent>/LIVE.md`, a trap or a do or don't to a reminder skill there, a rule the operator decided to
+its `Rules.md`, a fact every Agent needs to `<repo>/.claude/LIVE.md`, once. Remove notes the session proved wrong.
 
 ## 3. Handoff
 
