@@ -11,7 +11,7 @@ before                                    after
   skills/<agent>/SKILL.md                   skills/<agent>/SKILL.md      role card, tracked, unchanged role
   skills/<agent>/LIVE.md                    apex/<agent>/.gitignore      one line: *
                                             apex/<agent>/LIVE.md         live notes
-                                            apex/<agent>/Rules.md        operator rules
+                                            apex/<agent>/RULES.md        operator rules
                                             apex/<agent>/skills/*.md     reminder skills
   LIVE.md                                   LIVE.md                      shared notes, tracked, unchanged
   ledger/<agent>/                           ledger/<agent>/              tracked, unchanged
@@ -27,14 +27,14 @@ worktree reads it through `<repo>`, as it already does for the ledger.
 | File | Holds | Written by | Form |
 |---|---|---|---|
 | `LIVE.md` | facts about the current state that outlive one item: where things are, what is installed, what is pending outside the ledger | the Agent | short entries, rewritten when stale |
-| `Rules.md` | what the operator has decided the Agent may do | the Agent, only from the operator's words | approval-first, see below |
+| `RULES.md` | what the operator has decided the Agent may do | the Agent, only from the operator's words | approval-first, see below |
 | `skills/<topic>.md` | reminders on how to do the work: traps, good-to-knows, do's and don'ts | the Agent | one topic per file |
 
 A reminder skill is not an Agent: it never changes the role, the owned paths or the protocol. It reminds the Agent what
 to do and what to watch for in one topic. These files are plain markdown that the Agent reads with a file read. They
 are not Claude Code skills and are never discovered or invoked as `/<name>`.
 
-### Rules.md
+### RULES.md
 
 Rules are decided by the operator. Each one:
 
@@ -79,13 +79,13 @@ Run in the main checkout. `<a>` is the Agent's directory name under `.claude/ski
 
    | Entry | Goes to |
    |---|---|
-   | an operator decision that grants something | `Rules.md`, rewritten as `Allowed: ...` |
-   | an operator decision phrased as a ban ("never push to origin") | `Rules.md` as the grant it implies ("Allowed: push to `fork`"), plus a `Don't` in a reminder skill if the ban carries a real risk |
+   | an operator decision that grants something | `RULES.md`, rewritten as `Allowed: ...` |
+   | an operator decision phrased as a ban ("never push to origin") | `RULES.md` as the grant it implies ("Allowed: push to `fork`"), plus a `Don't` in a reminder skill if the ban carries a real risk |
    | a trap, a convention, a do or don't, a how-to | `skills/<topic>.md` |
    | a fact about the current state | `LIVE.md` |
    | stale or already covered by the ledger | nothing |
 
-   Drop dates and "since"/"as of" wording from rules as they move. Show the operator the new `Rules.md` before step 3:
+   Drop dates and "since"/"as of" wording from rules as they move. Show the operator the new `RULES.md` before step 3:
    only the operator decides rules.
 
 3. Remove the old file from the tree and from the index:
@@ -108,7 +108,7 @@ Run in the main checkout. `<a>` is the Agent's directory name under `.claude/ski
    git check-ignore -q .claude/apex/<a>/LIVE.md && echo ignored
    git status --porcelain -- .claude/apex          # prints nothing
    test ! -e .claude/skills/<a>/LIVE.md && echo moved
-   grep -n '^- ' .claude/apex/<a>/Rules.md | grep -v '^[0-9]*:- Allowed: '   # prints nothing
+   grep -n '^- ' .claude/apex/<a>/RULES.md | grep -v '^[0-9]*:- Allowed: '   # prints nothing
    ```
 
 6. Commit the removal and the role card edit per `git-discipline`. The new folder never appears in the commit.
@@ -121,7 +121,7 @@ The repo's skills and design need the following changes before a migrated Agent 
 items, not migration steps.
 
 - `docs/design/agents.md`: the layout, the three file kinds and the Rules form.
-- `agent-protocol`: at Startup, read `.claude/apex/<agent>/LIVE.md`, `Rules.md` and every `skills/*.md`. Write traps
+- `agent-protocol`: at Startup, read `.claude/apex/<agent>/LIVE.md`, `RULES.md` and every `skills/*.md`. Write traps
   to reminder skills, and write rules only from the operator's words. In the LIVE.md section, the Agent's notes move
   to the private folder.
 - `sign-off` and `git-discipline`: drop the Agent's `LIVE.md` from staged `.claude/` paths. The private folder is never

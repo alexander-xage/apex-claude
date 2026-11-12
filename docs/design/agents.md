@@ -59,7 +59,7 @@ flowchart LR
   skills/<agent>/SKILL.md      role card, user-owned; body lists the skills to pre-load
   apex/<agent>/.gitignore      one line, *: the folder ignores itself
   apex/<agent>/LIVE.md         live notes, agent-owned; replaces memory
-  apex/<agent>/Rules.md        what the operator allows
+  apex/<agent>/RULES.md        what the operator allows
   apex/<agent>/skills/*.md     reminder skills, agent-owned
   LIVE.md                      shared notes: facts true for every Agent in this repo
   ledger/<agent>/NNN.md        one item per file, never deleted
@@ -76,7 +76,7 @@ The folder lives only in the main checkout; a worktree reads it through `<repo>`
 | File | Holds | Written by |
 |---|---|---|
 | `LIVE.md` | facts about the current state that outlive one item | the Agent |
-| `Rules.md` | what the operator has decided the Agent may do | the Agent, only from the operator's words |
+| `RULES.md` | what the operator has decided the Agent may do | the Agent, only from the operator's words |
 | `skills/<topic>.md` | reminders on how to do the work: traps, good-to-knows, do's and don'ts, one topic per file | the Agent |
 
 A rule starts with `Allowed:` and grants one specific action: what, on what, when. It carries no date and no history,

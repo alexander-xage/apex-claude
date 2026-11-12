@@ -13,7 +13,7 @@ is your role card's directory name.
   skills/<agent>/SKILL.md      role card, user-owned; never edit it
   apex/<agent>/                your private folder; its .gitignore holds *, so nothing in it is tracked
     LIVE.md                    your live notes; you own and rewrite them
-    Rules.md                   what the operator allows you; written only from the operator's words
+    RULES.md                   what the operator allows you; written only from the operator's words
     skills/<topic>.md          your reminder skills: traps, good-to-knows, do's and don'ts
   LIVE.md                      shared notes for every Agent in this repo; any Agent edits them
   ledger/<agent>/NNN.md        one item per file, never deleted
@@ -61,7 +61,7 @@ wrong close reason with `apex reopen` then `apex close`.
 
 ## Startup
 
-1. Read `<repo>/.claude/apex/<agent>/LIVE.md`, `Rules.md` and every `skills/*.md` there with file reads. A missing
+1. Read `<repo>/.claude/apex/<agent>/LIVE.md`, `RULES.md` and every `skills/*.md` there with file reads. A missing
    file is empty; a tracked `<repo>/.claude/skills/<agent>/LIVE.md` means the Agent is not migrated: tell the operator
    to run `/apex-init`, which moves it.
 2. Read `<repo>/.claude/LIVE.md` with a file read, if it exists.
@@ -183,7 +183,7 @@ contradictions. They hold what outlives one item; per-item progress belongs in t
 |---|---|---|
 | `<repo>/.claude/LIVE.md` | facts every Agent in this repo needs: build steps, repo conventions, shared traps | any Agent |
 | `<repo>/.claude/apex/<agent>/LIVE.md` | facts about the current state that only your role needs | you |
-| `<repo>/.claude/apex/<agent>/Rules.md` | what the operator has decided you may do | you, only from the operator's words |
+| `<repo>/.claude/apex/<agent>/RULES.md` | what the operator has decided you may do | you, only from the operator's words |
 | `<repo>/.claude/apex/<agent>/skills/<topic>.md` | reminders on how to do your work: traps, good-to-knows, do's and don'ts | you |
 
 A fact goes in one file, never both. Move it to `<repo>/.claude/LIVE.md` once a second Agent needs it.

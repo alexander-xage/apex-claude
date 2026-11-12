@@ -21,7 +21,7 @@ Find it with `apex list --status in-progress --agent <agent>`. None: skip to ste
 
 Update the notes `agent-protocol` defines with what this session learned that a future session needs: a state fact to
 `<repo>/.claude/apex/<agent>/LIVE.md`, a trap or a do or don't to a reminder skill there, a rule the operator decided to
-its `Rules.md`, a fact every Agent needs to `<repo>/.claude/LIVE.md`, once. Remove notes the session proved wrong.
+its `RULES.md`, a fact every Agent needs to `<repo>/.claude/LIVE.md`, once. Remove notes the session proved wrong.
 
 ## 3. Handoff
 

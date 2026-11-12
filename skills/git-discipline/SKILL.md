@@ -15,8 +15,8 @@ the file is missing, use the defaults.
 
 | Action | Default |
 |---|---|
-| Commit | on the operator's approval, or automatically when `.claude/git.md` or a `Rules.md` line allows it |
-| Push | on the operator's approval, or when a line in the Agent's `Rules.md` allows that push; the `Push` row of `.claude/git.md` adds rules, never permission |
+| Commit | on the operator's approval, or automatically when `.claude/git.md` or a `RULES.md` line allows it |
+| Push | on the operator's approval, or when a line in the Agent's `RULES.md` allows that push; the `Push` row of `.claude/git.md` adds rules, never permission |
 | PR | only when the operator asks for one |
 
 - Never remind the operator to open a PR.

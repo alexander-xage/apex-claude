@@ -92,7 +92,7 @@ Show the operator one plan and wait for approval.
 | Status conflicts | every item whose file status differs from its `INDEX.md` row or from its old handoff; the item file wins, the operator confirms, and a handoff's differing claim goes into the new handoff's State as "check before resuming" |
 | In progress | at most one item per Agent; the operator picks it when several old items are running |
 | Handoffs | old path to `.claude/ledger/<agent>/handoff.md`, or dropped, and why |
-| Memory | per rule, by the sort table in 8: the Agent's `LIVE.md`, `Rules.md` or a reminder skill, `.claude/LIVE.md`, or dropped |
+| Memory | per rule, by the sort table in 8: the Agent's `LIVE.md`, `RULES.md` or a reminder skill, `.claude/LIVE.md`, or dropped |
 | References | in-repo files citing old items or paths (to rewrite), and references in other repos (listed only) |
 | Left alone | other-home files and anything else that stays, and why |
 | To delete after confirmation | every old file the migration replaces |
@@ -254,8 +254,8 @@ itself. The role card, ledger, handoff and `.claude/LIVE.md` stay where they are
 
    | Entry | Goes to |
    |---|---|
-   | an operator decision that grants something | `Rules.md`, as `- Allowed: <action, target, condition>` |
-   | an operator decision phrased as a ban | `Rules.md` as the grant it implies, plus a `Don't:` in a reminder skill if the ban guards a real risk |
+   | an operator decision that grants something | `RULES.md`, as `- Allowed: <action, target, condition>` |
+   | an operator decision phrased as a ban | `RULES.md` as the grant it implies, plus a `Don't:` in a reminder skill if the ban guards a real risk |
    | a trap, a convention, a do or don't, a how-to | `skills/<topic>.md`, lines `Do:`, `Don't:`, `Trap:`, `Good to know:` |
    | a fact about the current state | `LIVE.md` |
    | stale, or already in the ledger or `.claude/LIVE.md` | dropped |
@@ -266,5 +266,5 @@ itself. The role card, ledger, handoff and `.claude/LIVE.md` stay where they are
 4. In the role card, replace the `Live notes` row with `| Notes, rules, reminders | .claude/apex/<a>/ |`. The role
    card is the operator's file: this row only, with the operator's approval.
 5. Check: `git -C <repo> check-ignore -q .claude/apex/<a>/LIVE.md` exits 0, `git -C <repo> status --porcelain --
-   .claude/apex` prints nothing, and every `- ` line of `Rules.md` starts with `- Allowed: `.
+   .claude/apex` prints nothing, and every `- ` line of `RULES.md` starts with `- Allowed: `.
 
