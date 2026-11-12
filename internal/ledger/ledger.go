@@ -213,7 +213,28 @@ func Open(root, agent string) (*Ledger, error) {
 	return &Ledger{dir: filepath.Join(root, ".claude", "ledger", agent), now: time.Now}, nil
 }
 
+// PerTicketMarker is the file in an Agent's ledger directory that switches it from one mono ledger to one ledger per
+// ticket, each in its own subdirectory.
+const PerTicketMarker = "per-ticket"
+
+// PerTicket reports whether the Agent keeps one ledger per ticket.
+func (l *Ledger) PerTicket() bool {
+	_, err := os.Stat(filepath.Join(l.dir, PerTicketMarker))
+	return err == nil
+}
+
+// ForTicket returns the ledger of one ticket, kept in its own subdirectory of l.
+func (l *Ledger) ForTicket(ticket string) (*Ledger, error) {
+	if ticket == "" || filepath.Base(ticket) != ticket || strings.HasPrefix(ticket, ".") {
+		return nil, fmt.Errorf("%w: ticket %q is not a directory name", ErrUsage, ticket)
+	}
+	return &Ledger{dir: filepath.Join(l.dir, ticket), now: l.now}, nil
+}
+
 func itemName(id int) string { return fmt.Sprintf("%03d.md", id) }
+
+// Dir is the directory holding the ledger's items and its handoff.
+func (l *Ledger) Dir() string { return l.dir }
 
 func (l *Ledger) Path(id int) string { return filepath.Join(l.dir, itemName(id)) }
 

@@ -1,44 +1,20 @@
 ---
 checkout: /Users/alexanderstroev/Documents/GitHub/apex-claude
 branch: fresh-slate
-head: b67622a3524e735953ad52bd94e6f732978a6fe8
+head: 45068ad4c2d26829e7d08384d2937ed9662d74b5
 ---
 ## Startup
-invoke the Agent skill (reads both LIVE.md files); apex graph update .; apex list --agent main
+invoke the Agent skill (reads both LIVE.md files); apex list --agent main
 
 ## State
-No item in progress. 001 closed: `git-discipline` section 3 "When to commit" gates commits behind a silent
-worth-it check; `agent-protocol`, `apex-init` and `docs/design/agents.md` follow it. This handoff is uncommitted and
-rides in a later commit.
-
-`fresh-slate` has unpushed commits on top of `fork`; no PR is open. `tmp/` (dry-run reference
-material in `tmp/dryrun/`) is untracked.
-
-| Piece | State |
-|---|---|
-| `apex` binary (`cmd/`, `internal/`) | done, tested, reviewed |
-| Five protocol skills (`skills/`) | done, reviewed, exercised end to end in scratch repos |
-| `pr-review` skill | workflow script passes a dry run against stub agents; never run on a real PR; installed |
-| `Apex` output style | installed; not yet selected or seen in the `/output-style` picker |
-| Named graphs (`apex graph --name`) | done, tested against real graphify, installed |
-| Cross-Agent communication rules | written; not yet exercised by live Agents |
-| Install | run on this Mac at `b67622a`, `pr-review` included; live after a Claude Code restart |
-| LLMTraining migration | dry run on a snapshot passed; the live repo was never touched |
+No item in progress. 005 closed: origin/master's Windows installer (50cc181) merged into fresh-slate with graphify
+stripped, commit 45068ad. fork/fresh-slate and fork/master are in sync (master = origin/master). This handoff is
+uncommitted. Adopted repos still hold uncommitted graphify removals. `tmp/` is untracked.
 
 ## Next
-Try `/pr-review <pr>` on a real PR: check the
-`gh pr checkout --worktree` path, the inline-comment line mapping and the posted review format. It is the only piece
-never run for real.
+Nothing queued. Release left: open the `feat!` PR for `fresh-slate` when the operator asks, merge, tag.
 
 ## Open threads
-- Security lens: `skills/pr-review/prompts/lens-security.md` is a stub, waiting on model access.
-- Named graph in LLMTraining: the Agent there asked for a second graph; tell it to run
-  `apex graph --name <n> update <path>` and list it in `.claude/LIVE.md`.
-- LLMTraining migration: only when no training run is active. Confirm with its Dev Agent, have a clean `git status`,
-  run `/apex-init` there (routes to migrate). Expected from the snapshot run: dev 55 items, research 21, web-dev 6;
-  Xage stays in `xage-guard`; it asks separately before deleting the 24 project-memory files; 11 XageLedger files in
-  `xage-guard` cite old numbers for the Xage Agent to fix.
+- Per-ticket mode: `apex-init` and README layout tables show mono only; extend if an adopted repo turns it on.
 - PR for `fresh-slate`: open only when the operator says so; breaking merge, see `.claude/LIVE.md`.
-- `apex-init` conformant signals: deliberately few; calibrate after the live LLMTraining migration.
-- graphify internal file: exclusion relies on graphify 0.9.x's `.graphify_build.json`; recheck after a graphify
-  upgrade (marked `ponytail:` in `cmd/apex/graph.go`).
+- PowerShell installer edits are untested here (no pwsh); verify on Windows.

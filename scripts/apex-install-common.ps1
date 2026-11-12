@@ -13,7 +13,7 @@ function Get-ApexInstallConfig {
     Style     = Join-Path $ConfigDir 'output-styles\apex.md'
     LegacyBin = Join-Path $ConfigDir 'bin\apex.exe'
     Mark      = '.apex-installed'
-    Skills    = @('agent-protocol', 'graphify-discipline', 'git-discipline', 'sign-off', 'apex-init', 'pr-review')
+    Skills    = @('agent-protocol', 'git-discipline', 'sign-off', 'apex-init', 'pr-review')
   }
 }
 

@@ -15,6 +15,7 @@ is your role card's directory name.
   LIVE.md                      shared notes for every Agent in this repo; any Agent edits them
   ledger/<agent>/NNN.md        one item per file, never deleted
   ledger/<agent>/handoff.md    your handoff, overwritten each time
+  ledger/<agent>/per-ticket    optional marker: one ledger per ticket, each in ledger/<agent>/<ticket>/
 ```
 
 `<repo>` is always the main checkout, including when you work in a worktree. Find it with:
@@ -31,12 +32,11 @@ never run stateful verbs.
 | Call | Does |
 |---|---|
 | `apex add <task\|followup> <title> --agent <a>` | files a new open item, prints its path |
-| `apex list [--status s,s\|all] [--kind task\|followup] --agent <a>` | lists items; default status `in-progress,open`. The summary line counts every status for the selected `--kind`; `--status` filters only the rows |
+| `apex list [--status s,s\|all] [--kind task\|followup] --agent <a>` | lists items; default status `in-progress,open`. The summary line counts every status for the selected `--kind`; `--status` filters only the rows. A per-ticket ledger first prints `ledger: <dir>` |
 | `apex start <id> --agent <a>` | open to in-progress, prints the item path |
 | `apex close <id> <reason> --agent <a>` | to closed, from open or in-progress, prints the item path |
 | `apex reopen <id> --agent <a>` | in-progress or closed back to open, prints the item path |
 | `apex retitle <id> <title> --agent <a>` | replaces the item's title in any status, prints the item path |
-| `apex graph [--name n] <graphify args>` | graphify on this checkout's graph, or its named graph `n`; no `--agent` |
 
 | Exit | Meaning | Response |
 |---|---|---|
@@ -47,7 +47,11 @@ never run stateful verbs.
 | 4 | corrupt ledger | stop and report the file; never hand-edit frontmatter to fix it |
 | 64 | usage | fix the call |
 
-The table does not apply to `apex graph`; its exits and errors are in `graphify-discipline`.
+Your ledger directory, `<ledger>` below, is `<repo>/.claude/ledger/<agent>/`, unless that directory holds a file named
+`per-ticket`. Then every verb works on the ledger of the ticket the current branch names (`ENG-42` from
+`feat/eng-42-x`, else the branch name), and `apex list` prints its directory on a `ledger: <dir>` line; that is
+`<ledger>`. Each ticket ledger has its own items, numbered from 001, its own in-progress item and its own handoff. On a
+detached HEAD or outside git you get the mono ledger. Only the operator creates or deletes `per-ticket`.
 
 The binary owns item frontmatter. You edit only the body sections. Fix a wrong title with `apex retitle`, and a
 wrong close reason with `apex reopen` then `apex close`.
@@ -57,7 +61,8 @@ wrong close reason with `apex reopen` then `apex close`.
 1. Read `<repo>/.claude/skills/<agent>/LIVE.md` with a file read.
 2. Read `<repo>/.claude/LIVE.md` with a file read, if it exists.
 3. Load every skill your role card lists.
-4. Read `<repo>/.claude/ledger/<agent>/handoff.md`. If it does not exist, skip to step 6.
+4. Run `apex list --agent <agent>` to find `<ledger>`, then read `<ledger>/handoff.md`. If it does not exist, skip to
+   step 6.
 5. Check freshness. The handoff is stale when any of these holds:
 
    | Check | Command |
@@ -69,7 +74,7 @@ wrong close reason with `apex reopen` then `apex close`.
    An unknown `head` makes the diff exit 128 with `fatal: bad object`: that is stale, not a failed command.
    A stale handoff is still read. Staleness means State may be wrong: reconcile it against what changed
    (`git diff --stat <head> HEAD`, `git status`) before trusting it.
-6. Run `apex graph update .` and `apex list --agent <agent>`, with or without a handoff.
+6. Run `apex list --agent <agent>`, with or without a handoff.
 
 ## Pick the next item
 
@@ -94,7 +99,7 @@ starting another.
    | subagent | a self-contained slice that benefits from a fresh context |
    | ultracode | the item splits into independent slices that run in parallel |
 
-   Subagents and Ultracode workers get the item's Goal and read-only graph access. They report back; they own no
+   Subagents and Ultracode workers get the item's Goal. They report back; they own no
    state.
 4. Append one line to `## Log` per step taken, as you go. The Log is the crash cursor: after an interruption, the last
    line tells you where to resume. Cite a peer's item in full: `<repo>:<agent>/NNN`.
@@ -138,7 +143,7 @@ path and what changed there in the item's Log.
 
 ## Handoff
 
-Overwrite `<repo>/.claude/ledger/<agent>/handoff.md` after every close and whenever you stop mid-item. Fill the
+Overwrite `<ledger>/handoff.md` after every close and whenever you stop mid-item. Fill the
 frontmatter by running the commands in the checkout you worked in; `head` is always the full SHA.
 
 The frontmatter keys and the four headings are literal; replace each `<...>` with its value.
@@ -150,7 +155,7 @@ branch: <output of git rev-parse --abbrev-ref HEAD>
 head: <output of git rev-parse HEAD>
 ---
 ## Startup
-invoke the Agent skill (reads both LIVE.md files); apex graph update .; apex list --agent <agent>
+invoke the Agent skill (reads both LIVE.md files); apex list --agent <agent>
 
 ## State
 <current item and where it stopped; uncommitted work>

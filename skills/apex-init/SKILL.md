@@ -127,14 +127,14 @@ stale state (what was running or last committed). A fact several Agents need goe
 files such as `MEMORY.md` are dropped.
 
 **References.** Search the main checkout only: tracked and untracked text files, honoring ignore rules, skipping
-worktrees, the graph and scratch directories. Never search ignored files: they hold model weights, run outputs and
+worktrees and scratch directories. Never search ignored files: they hold model weights, run outputs and
 virtualenvs, and reading them can exhaust memory on a machine that is training.
 
 Pass each old shape and path as a fixed string, one `-e` each, so `(025)` and `.` match literally:
 
 ```bash
 git -C <repo> grep -nIF --untracked -e '<shape>' -e '<path>' -- . \
-  ':(exclude).claude/worktrees' ':(exclude).claude/graphify' ':(exclude,glob)**/node_modules/**' \
+  ':(exclude).claude/worktrees' ':(exclude,glob)**/node_modules/**' \
   ':(exclude,glob)**/.venv/**' ':(exclude,glob)**/venv/**' ':(exclude,glob)tmp/**' ':(exclude,glob)**/scratch*/**'
 ```
 

@@ -2,13 +2,13 @@
 
 A Claude Code skill set for user-defined Agents. Each Agent is a skill you write; it owns one ledger and one handoff,
 works the ledger one item at a time, and keeps its notes in `LIVE.md` instead of memory. The `apex` CLI owns the
-deterministic parts: ledger state and the per-checkout code graph.
+deterministic part: ledger state.
 
 The contract is [docs/design/agents.md](docs/design/agents.md).
 
 ## Install
 
-Requires Go 1.26+, `graphify` 0.9.72+ on `PATH` (`uv tool install graphifyy`), and the ponytail plugin
+Requires Go 1.26+ and the ponytail plugin
 (`/plugin marketplace add DietrichGebert/ponytail`, then `/plugin install ponytail@ponytail`).
 
 ```sh
@@ -24,7 +24,7 @@ pwsh scripts/install.ps1      # -Prefix <dir> -ConfigDir <dir> to override
 pwsh scripts/uninstall.ps1
 ```
 
-`make install` stops if graphify or ponytail is missing, or if a skill folder or `output-styles/apex.md` of the same
+`make install` stops if ponytail is missing, or if a skill folder or `output-styles/apex.md` of the same
 name exists that it did not install; it never overwrites or removes a file of yours. It also stops if a legacy
 Apex v0.3 binary (`~/.claude/bin/apex`) is present, since it would shadow the new `apex` on `PATH`; remove the old
 install first with `example/scripts/uninstall.sh` (or `example/scripts/uninstall.ps1`). `PREFIX` must be on the `PATH` of the shell Claude Code
@@ -43,15 +43,12 @@ Then adopt the protocol in a repo with one session that runs `/apex-init`.
   LIVE.md                      shared notes: facts every Agent in the repo needs
   ledger/<agent>/NNN.md        one item per file, never deleted
   ledger/<agent>/handoff.md    one file, overwritten
-  graphify/<checkout>/         one graph per checkout
   git.md                       this repo's commit, push and PR conventions
 ```
 
-The graph covers code only: `apex graph` keeps `.claude/` out of it without writing into the checkout.
-
 ## apex verbs
 
-Every verb but `graph` takes `--agent <name>`, which must name an existing `.claude/skills/<name>/SKILL.md`; until
+Every verb takes `--agent <name>`, which must name an existing `.claude/skills/<name>/SKILL.md`; until
 then the verb exits 1. `/apex-init` creates the role card.
 
 | Verb | Does |
@@ -62,18 +59,15 @@ then the verb exits 1. `/apex-init` creates the role card.
 | `close <id> <reason>` | to closed |
 | `reopen <id>` | in-progress or closed to open |
 | `retitle <id> <title>` | replaces an item's title, any status |
-| `graph [--name n] <graphify args>` | runs graphify against this checkout's graph, or its named graph `n` |
 
-Exit codes: 0 ok, 1 not found, 2 environment, 3 illegal transition, 4 corrupt ledger, 64 usage. `graph` exits
-with graphify's own code, or 128+N when graphify dies by signal N.
+Exit codes: 0 ok, 1 not found, 2 environment, 3 illegal transition, 4 corrupt ledger, 64 usage.
 
 ## Skills
 
 | Skill | Use |
 |---|---|
 | `/agent-protocol` | session start, the item loop, ledger and handoff rules; every Agent pre-loads it |
-| `/graphify-discipline` | how Agents query and update the code graph through `apex graph` |
 | `/git-discipline` | commit rules and per-repo conventions from `.claude/git.md` |
 | `/sign-off` | ends a session: log, `LIVE.md`, handoff, cleanup, unpushed commits |
 | `/apex-init` | adopts the protocol in a repo: initialize, migrate, or report conformant |
-| `/pr-review <pr> [mode]` | reviews one pull request through a one-off workflow and serves the draft review before posting; modes `general`, `ponytail`, `security` (stub), `mega` |
+| `/pr-review <pr> [mode]` | reviews one pull request through a one-off workflow and serves the draft review before posting; modes `general`, `ponytail`, `security` (needs `mythos`), `mega` |

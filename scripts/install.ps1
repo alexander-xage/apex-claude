@@ -5,7 +5,7 @@
 .DESCRIPTION
   Builds apex, copies it to -Prefix, and installs the Apex skills and output style into
   -ConfigDir as user skills (bare names, not a plugin). Same checks and ownership rules as the
-  Makefile: stops if graphify or ponytail is missing, if a skill folder or output-styles/apex.md
+  Makefile: stops if ponytail is missing, if a skill folder or output-styles/apex.md
   exists that apex did not install, or if a legacy Apex v0.3 binary would shadow the new one.
 
   Runs on Windows PowerShell 5.1 and PowerShell 7+. Undo with scripts/uninstall.ps1.
@@ -26,7 +26,6 @@ $cfg = Get-ApexInstallConfig -Prefix $Prefix -ConfigDir $ConfigDir
 $repo = Split-Path $PSScriptRoot -Parent
 
 # check
-if (-not (Get-Command graphify -ErrorAction SilentlyContinue)) { Fail 'graphify is not on PATH: uv tool install graphifyy' }
 $plugins = Join-Path $cfg.ConfigDir 'plugins/installed_plugins.json'
 if (-not ((Test-Path $plugins) -and (Select-String -Path $plugins -Pattern '"ponytail@ponytail"' -SimpleMatch -Quiet))) {
   Fail 'ponytail plugin is not installed: /plugin marketplace add DietrichGebert/ponytail, then /plugin install ponytail@ponytail'

@@ -1,6 +1,6 @@
 PREFIX ?= $(HOME)/.local/bin
 CLAUDE_DIR ?= $(or $(CLAUDE_CONFIG_DIR),$(HOME)/.claude)
-SKILLS := agent-protocol graphify-discipline git-discipline sign-off apex-init pr-review
+SKILLS := agent-protocol git-discipline sign-off apex-init pr-review
 # Marks a skill directory as installed by apex; install and uninstall never touch one without it.
 MARK := .apex-installed
 # The output style is one file, so its own frontmatter name is the ownership mark.
@@ -27,7 +27,6 @@ uninstall:
 	  if [ -f "$$d/$(MARK)" ]; then rm -rf "$$d" || exit 1; fi; done
 
 check:
-	@command -v graphify >/dev/null || { echo "graphify is not on PATH: uv tool install graphifyy" >&2; exit 1; }
 	@grep -q '"ponytail@ponytail"' "$(CLAUDE_DIR)/plugins/installed_plugins.json" 2>/dev/null || \
 	  { echo "ponytail plugin is not installed: /plugin marketplace add DietrichGebert/ponytail, then /plugin install ponytail@ponytail" >&2; exit 1; }
 	@if [ -e "$(CLAUDE_DIR)/bin/apex" ]; then echo "$(CLAUDE_DIR)/bin/apex is a legacy Apex v0.3 install and shadows the new apex on PATH; remove it first: example/scripts/uninstall.sh" >&2; exit 1; fi

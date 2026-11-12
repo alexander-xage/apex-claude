@@ -16,7 +16,7 @@ change: the models, `EFFORT`, `CAP`, and the A/B agreement rules.
 | `dir` | absolute path of the checkout holding the pull request |
 | `diffPath` | absolute path of `diff.patch` |
 | `promptDir` | absolute path of this skill's `prompts/` directory |
-| `lenses` | the mode's lenses in order, without any stub lens, for example `["ponytail", "general"]` |
+| `lenses` | the mode's lenses in order, for example `["security", "ponytail", "general"]` |
 | `slices` | `[{name, files, focus}]`, at most 10 |
 | `existing` | the contents of `existing.json` |
 
@@ -25,13 +25,13 @@ export const meta = {
   name: 'pr-review',
   description: 'Review one pull request: reviewers per slice, A/B judges, A/B auditors',
   phases: [
-    { title: 'Review', detail: 'one reviewer per slice, lens by lens', model: 'sonnet' },
+    { title: 'Review', detail: 'one reviewer per slice, lens by lens; mythos for the security lens', model: 'sonnet' },
     { title: 'Judge', detail: 'A and B verify every candidate and existing comment', model: 'opus' },
     { title: 'Audit', detail: 'A and B rule on the findings document', model: 'fable' },
   ],
 }
 
-const MODEL = { reviewer: 'sonnet', judge: 'opus', auditor: 'fable' }
+const MODEL = { reviewer: 'sonnet', security: 'mythos', judge: 'opus', auditor: 'fable' }
 const EFFORT = 'medium'
 const CAP = 10
 const RANK = ['NIT', 'LOW', 'ASK', 'ISSUE']
@@ -84,19 +84,27 @@ const pair = (role, phase, prompt, schema) => parallel(['A', 'B'].map(n => () =>
 const byId = (answer, key) => new Map((answer ? answer[key] : []).map(v => [v.id, v]))
 
 // Lenses run one after another, so at most slices.length reviewers are ever running.
-const candidates = []
+const candidates = [], skipped = []
 for (const lens of lenses) {
   const answers = await parallel(slices.map(s => () => agent(
     `Read ${promptDir}/reviewer.md and ${promptDir}/lens-${lens}.md and follow them.\n${inputs}\n` +
     `Your slice: ${s.name}\nFiles:\n${s.files.join('\n')}${s.focus ? `\nFocus: ${s.focus}` : ''}`,
-    { label: `review:${lens}:${s.name}`, phase: 'Review', model: MODEL.reviewer, effort: EFFORT, schema: FINDINGS })))
+    { label: `review:${lens}:${s.name}`, phase: 'Review', model: MODEL[lens] || MODEL.reviewer, effort: EFFORT,
+      schema: FINDINGS })))
+  // Every reviewer of the lens failing means its model is unreachable: skip the lens rather than review it on another.
+  if (!answers.some(Boolean)) {
+    log(`every ${lens} reviewer returned nothing; ${MODEL[lens] || MODEL.reviewer} may be unavailable, lens skipped`)
+    skipped.push(lens)
+    continue
+  }
   answers.forEach((a, i) => {
     if (!a) return log(`reviewer ${lens}:${slices[i].name} returned nothing; that slice is unreviewed for this lens`)
     for (const f of a.findings) candidates.push({ ...f, id: `${lens}-${candidates.length + 1}`, lens, source: 'reviewer' })
   })
 }
+const empty = { final: [], needsMaster: [], dropped: [], existing: [], missed: [], document: '', skipped }
+if (skipped.length === lenses.length) return empty
 for (const e of existing) candidates.push({ ...e, source: 'existing' })
-const empty = { final: [], needsMaster: [], dropped: [], existing: [], missed: [], document: '' }
 if (!candidates.length) return empty
 
 const [ja, jb] = (await pair('judge', 'Judge',
@@ -139,7 +147,8 @@ for (const f of ours) {
   else if (a && b && a.action === 'keep' && b.action === 'keep' && a.category === b.category) final.push({ ...row, category: a.category })
   else needsMaster.push(row)
 }
-return { final, needsMaster, dropped, existing: theirs, missed: audits.filter(Boolean).flatMap(a => a.missed), document }
+return { final, needsMaster, dropped, existing: theirs, missed: audits.filter(Boolean).flatMap(a => a.missed), document,
+  skipped }
 ```
 
 How A and B combine:
